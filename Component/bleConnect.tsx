@@ -55,7 +55,7 @@ import BleManager, {
   BleScanMode,
   Peripheral,
 } from 'react-native-ble-manager';
-import HomeComponent from './home';
+import HomeComponent from './home_origin';
 import {parse} from 'react-native-svg';
 const BleManagerModule = NativeModules.BleManager;
 const bleManagerEmitter = new NativeEventEmitter(BleManagerModule);

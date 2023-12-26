@@ -10,7 +10,7 @@ const Intro = () => {
     }, 3000);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [navigation]);
   return (
     <>
       <View style={styles.container}>
@@ -30,9 +30,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   intro_image: {
-    width: windowWidth * 0.5958,
-    height: windowWidth * 0.5958 * (253 / 255),
-    aspectRatio: 255 / 253,
+    width: windowWidth * 0.5333,
+    height: windowWidth * 0.2909,
+    // aspectRatio: 255 / 253,
   },
 });
 export default Intro;
