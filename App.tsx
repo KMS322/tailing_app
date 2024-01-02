@@ -5,12 +5,8 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import Intro from './Component/intro';
 import LogInComponent from './Component/logIn';
 import HomeComponent from './Component/home';
-import UserComponent from './Component/user';
-import BleConnectComponent from './Component/bleConnect';
-import PetDetailComponent from './Component/petDetail';
-import SignInComponent from './Component/signIn';
-import PetRegisterComponent from './Component/petRegister';
-import ShowComponent from './Component/showData';
+import ShowListComponent from './Component/showListComponent';
+import ConnectBleComponent from './Component/connectBleComponent';
 const Stack = createNativeStackNavigator();
 
 const App = () => {
@@ -26,12 +22,8 @@ const App = () => {
           <Stack.Screen name="Intro" component={Intro} />
           <Stack.Screen name="Login" component={LogInComponent} />
           <Stack.Screen name="Home" component={HomeComponent} />
-          {/*<Stack.Screen name="Detail" component={PetDetailComponent} />
-          <Stack.Screen name="BleConnect" component={BleConnectComponent} />
-          <Stack.Screen name="SignIn" component={SignInComponent} />
-          <Stack.Screen name="PetRegister" component={PetRegisterComponent} />
-          <Stack.Screen name="User" component={UserComponent} /> */}
-          {/* <Stack.Screen name="Show" component={ShowComponent} /> */}
+          <Stack.Screen name="ShowList" component={ShowListComponent} />
+          <Stack.Screen name="ConnectBle" component={ConnectBleComponent} />
         </Stack.Navigator>
       </NavigationContainer>
     </>

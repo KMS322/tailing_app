@@ -1,7 +1,3 @@
-/**
- * Sample BLE React Native App
- */
-
 import React, {useState, useEffect} from 'react';
 import {
   SafeAreaView,
@@ -19,25 +15,19 @@ import {
   Dimensions,
   TouchableOpacity,
   TextInput,
+  Image,
 } from 'react-native';
-import {useNavigation} from '@react-navigation/native';
-import {Colors} from 'react-native/Libraries/NewAppScreen';
 
 const SECONDS_TO_SCAN_FOR = 7;
 const SERVICE_UUIDS: string[] = [];
 const windowWidth = Dimensions.get('window').width;
-// const SERVICE_UUID = '6E400001-B5A3-F393-E0A9-E50E24DCCA9E';
 const SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
 const CHARACTERISTIC_UUID_RX = '6e400002-b5a3-f393-e0A9-e50e24dcca9e';
-// const CHARACTERISTIC_UUID_TX = '6E400003-B5A3-F393-E0A9-E50E24DCCA9E';
 const CHARACTERISTIC_UUID_TX = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
+
+// const targetDeviceId = 'A0:76:4E:E7:FC:6E';
 // const targetDeviceId = 'A0:76:4E:E7:42:02';
-// const targetDeviceId = 'A0:76:4E:E7:42:02';
-// const targetDeviceId = 'A0:76:4E:E8:23:A6';
-const targetDeviceId = 'A0:76:4E:E7:FC:6E';
-// const targetDeviceId = 'A0:76:4E:E4:83:B2';
-// const targetDeviceId = 'A0:76:4E:E4:48:8E';
-// const targetDeviceName = 'BLE_test_esp32s3';
+const targetDeviceId = 'A0:76:4E:E2:7C:EE';
 const targetDeviceName = 'ESP32_231001';
 const ALLOW_DUPLICATES = true;
 const convertToAscii = (numbers: number[]): string => {
@@ -55,7 +45,7 @@ import BleManager, {
   BleScanMode,
   Peripheral,
 } from 'react-native-ble-manager';
-import HomeComponent from './home_origin';
+import HomeComponent from './home';
 import {parse} from 'react-native-svg';
 const BleManagerModule = NativeModules.BleManager;
 const bleManagerEmitter = new NativeEventEmitter(BleManagerModule);
@@ -85,22 +75,19 @@ async function requestLocationPermission() {
 }
 
 declare module 'react-native-ble-manager' {
-  // enrich local contract with custom state properties needed by App.tsx
   interface Peripheral {
     connected?: boolean;
     connecting?: boolean;
   }
 }
-const initialAsciiString = '+11111,+222,+333';
-////////////////////////////////////////////////////
-const BleConnectComponent = () => {
+
+const ConnectBleComponent = ({route}) => {
   const [isScanning, setIsScanning] = useState(false);
   const [peripherals, setPeripherals] = useState(
     new Map<Peripheral['id'], Peripheral>(),
   );
   // const [rawDatas, setRawDatas] = useState(initialAsciiString);
   const [rawDatas, setRawDatas] = useState('');
-  const navigation = useNavigation();
   const [inputValue, setInputValue] = useState('');
   const [connectedDeviceId, setConnectedDeviceId] = useState('');
   const [factor, setFactor] = useState(0);
@@ -108,7 +95,7 @@ const BleConnectComponent = () => {
   const [cnt, setCnt] = useState(0);
   const [pulse, setPulse] = useState(0);
 
-  <HomeComponent bleData={rawDatas} />;
+  // <HomeComponent bleData={rawDatas} />;
 
   peripherals.get;
 
@@ -397,7 +384,6 @@ const BleConnectComponent = () => {
 
   const renderItem = ({item}: {item: Peripheral}) => {
     if (item.id === targetDeviceId) {
-      const backgroundColor = item.connected ? '#12B6D1' : Colors.white;
       return (
         <TouchableHighlight
           onPress={() => {
@@ -406,10 +392,22 @@ const BleConnectComponent = () => {
           key={item.id}>
           <View style={styles.row}>
             {/* <Text style={styles.peripheralName}>{targetDeviceName}</Text> */}
-            <Text style={styles.peripheralName}>{item.id}</Text>
-            <Text style={styles.state}>
-              {rawDatas === '' ? '연결 안 됨' : '연결됨'}
-            </Text>
+            <Image
+              source={require('../assets/images/device_icon.png')}
+              style={styles.icon}
+            />
+            <Text style={styles.peripheralName}>1</Text>
+            <Image
+              source={
+                rawDatas === ''
+                  ? require('../assets/images/connecting_img1.png')
+                  : require('../assets/images/connecting_img2.png')
+              }
+              style={styles.connecting}
+            />
+            {/* <Text style={styles.state}>
+    {rawDatas === '' ? '연결 안 됨' : '연결됨'}
+  </Text> */}
           </View>
         </TouchableHighlight>
       );
@@ -453,14 +451,43 @@ const BleConnectComponent = () => {
     }
     return byteArray;
   };
+  const {data} = route.params;
+  console.log('data : ', data);
   return (
     <>
-      <TouchableOpacity
-        onPress={() => navigation.goBack()}
-        style={styles.btn_box}>
-        <Text style={styles.back_btn}>돌아가기</Text>
-      </TouchableOpacity>
-      <StatusBar />
+      <View style={styles.container}>
+        <Text style={styles.title}>{data.title}</Text>
+        <View style={styles.img_box}>
+          <TouchableOpacity style={styles.ble_touch} onPress={startScan}>
+            {isScanning ? (
+              <Image
+                source={require('../assets/images/bleConnect_img.png')}
+                style={styles.ble_img}
+              />
+            ) : (
+              <Image
+                source={require('../assets/images/bleStart_img.png')}
+                style={styles.ble_img}
+              />
+            )}
+          </TouchableOpacity>
+
+          <Text style={styles.ble_text}>
+            Turn on the Bluetooth connection{'\n'}of the device.
+          </Text>
+        </View>
+        <Text style={{...styles.title, marginTop: 20}}>Device list</Text>
+      </View>
+      <View style={styles.list_box}>
+        <FlatList
+          data={Array.from(peripherals.values())}
+          contentContainerStyle={{rowGap: 12}}
+          renderItem={renderItem}
+          keyExtractor={item => item.id}
+        />
+        <Text> aaa</Text>
+      </View>
+
       <SafeAreaView style={styles.body}>
         <Pressable
           style={styles.scanButton}
@@ -516,26 +543,48 @@ const BleConnectComponent = () => {
             <Text style={styles.scanButtonText}>초기화</Text>
           </Text>
         </Pressable>
-
-        {/* <Pressable
-          style={styles.scanButton}
-          android_ripple={{color: 'lightgray'}}>
-          <Text style={styles.scanButtonText}>{connectedDeviceId}</Text>
-        </Pressable> */}
-
-        {/* <Pressable
-          style={styles.scanButton}
-          onPress={() => {
-            navigation.navigate('Show', {emitter: bleManagerEmitter});
-          }}>
-          <Text style={styles.scanButtonText}>Click</Text>
-        </Pressable> */}
       </SafeAreaView>
     </>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    width: '100%',
+    height: 'auto',
+    display: 'flex',
+    padding: 0,
+  },
+  title: {
+    marginTop: 40,
+    marginLeft: 30,
+    fontSize: 30,
+    fontWeight: '700',
+    color: 'white',
+  },
+  img_box: {
+    width: '100%',
+    height: 'auto',
+    display: 'flex',
+    alignItems: 'center',
+  },
+  ble_touch: {
+    width: 300,
+    height: 300,
+    borderWidth: 1,
+    borderColor: 'white',
+  },
+  ble_img: {
+    width: 300,
+    height: 300,
+  },
+  ble_text: {
+    fontSize: 15,
+    color: 'white',
+    marginTop: 20,
+    textAlign: 'center',
+  },
+  // -------------------------------------
   btn_box: {
     paddingTop: 13,
     // backgroundColor: 'white',
@@ -564,13 +613,19 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: 'white',
   },
+  list_box: {
+    width: '90%',
+    height: 'auto',
+    borderWidth: 1,
+    borderColor: 'white',
+  },
   row: {
     width: windowWidth * 0.86,
     height: 47,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingLeft: 14,
+    paddingLeft: 4,
     paddingRight: 14,
     elevation: 2,
     backgroundColor: 'gray',
@@ -581,10 +636,19 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     marginTop: 36,
   },
+  icon: {
+    width: 30,
+    height: 30,
+  },
   peripheralName: {
+    width: 240,
     fontSize: 16,
     fontWeight: 'bold',
-    color: 'black',
+    color: 'white',
+  },
+  connecting: {
+    width: 30,
+    height: 30,
   },
   state: {
     fontSize: 16,
@@ -600,5 +664,4 @@ const styles = StyleSheet.create({
     borderColor: '#12B6D1',
   },
 });
-
-export default BleConnectComponent;
+export default ConnectBleComponent;

@@ -14,10 +14,8 @@ import {useNavigation} from '@react-navigation/native';
 const LogInComponent = () => {
   const navigation = useNavigation();
   const usernameRef = useRef(null);
-  const userID = 'admin';
-  const userPW = 'admin';
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [userID, setUserID] = useState('');
+  const [userPW, setUserPW] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   return (
     <>
@@ -30,8 +28,8 @@ const LogInComponent = () => {
           />
           <TextInput
             style={styles.input_text}
-            onChangeText={text => setUsername(text)}
-            value={username}
+            onChangeText={text => setUserID(text)}
+            value={userID}
             placeholder="ID"
             placeholderTextColor="#1EA3D6"
             ref={usernameRef}
@@ -48,8 +46,8 @@ const LogInComponent = () => {
           />
           <TextInput
             style={styles.input_text}
-            onChangeText={text => setPassword(text)}
-            value={password}
+            onChangeText={text => setUserPW(text)}
+            value={userPW}
             placeholder="PASSWORD"
             placeholderTextColor="#1EA3D6"
             ref={usernameRef}
@@ -105,7 +103,7 @@ const styles = StyleSheet.create({
   },
   title: {
     textAlign: 'left',
-    fontSize: 34,
+    fontSize: 32,
     fontWeight: '800',
     fontFamily: 'inter',
     marginTop: 140,

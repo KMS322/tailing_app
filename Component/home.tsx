@@ -1,8 +1,18 @@
+import {useNavigation} from '@react-navigation/native';
 import React, {useState} from 'react';
-import {View, StyleSheet, Image, FlatList, Dimensions} from 'react-native';
+import {
+  View,
+  StyleSheet,
+  Image,
+  FlatList,
+  Dimensions,
+  Text,
+} from 'react-native';
 const windowWidth = Dimensions.get('window').width;
 
 const HomeComponent = () => {
+  const navigation = useNavigation();
+
   const carouselImgs = [
     {
       id: 1,
@@ -86,6 +96,13 @@ const HomeComponent = () => {
         snapToAlignment="start"
         contentContainerStyle={styles.contentContainer}
       />
+      <Text
+        style={styles.text}
+        onPress={() => {
+          navigation.navigate('ShowList');
+        }}>
+        Go showList
+      </Text>
     </View>
   );
 };
@@ -97,7 +114,6 @@ const styles = StyleSheet.create({
   carousel_container: {
     width: '100%',
     height: 180,
-
     borderWidth: 1,
     borderColor: 'white',
   },
@@ -111,6 +127,10 @@ const styles = StyleSheet.create({
     width: '100%',
     display: 'flex',
     justifyContent: 'space-between',
+  },
+  text: {
+    fontSize: 30,
+    color: 'white',
   },
 });
 export default HomeComponent;
