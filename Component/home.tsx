@@ -7,10 +7,12 @@ import {
   FlatList,
   Dimensions,
   Text,
+  TouchableOpacity,
 } from 'react-native';
 const windowWidth = Dimensions.get('window').width;
 
-const HomeComponent = () => {
+const HomeComponent = ({route}) => {
+  const userID = route.params.data;
   const navigation = useNavigation();
 
   const carouselImgs = [
@@ -18,14 +20,14 @@ const HomeComponent = () => {
       id: 1,
       src: require('../assets/images/banner_img1.jpg'),
     },
-    {
-      id: 2,
-      src: require('../assets/images/banner_img2.jpg'),
-    },
-    {
-      id: 3,
-      src: require('../assets/images/banner_img3.jpg'),
-    },
+    // {
+    //   id: 2,
+    //   src: require('../assets/images/banner_img2.jpg'),
+    // },
+    // {
+    //   id: 3,
+    //   src: require('../assets/images/banner_img3.jpg'),
+    // },
   ];
   const [currentImgIndex, setCurrentImgIndex] = useState(0);
 
@@ -35,7 +37,7 @@ const HomeComponent = () => {
       style={[
         styles.carousel_img,
         {
-          width: index === currentImgIndex ? '95%' : '5%',
+          width: index === currentImgIndex ? '100%' : '5%',
         },
       ]}
     />
@@ -96,13 +98,21 @@ const HomeComponent = () => {
         snapToAlignment="start"
         contentContainerStyle={styles.contentContainer}
       />
-      <Text
-        style={styles.text}
+      <Text style={styles.user}>Hello, {userID}</Text>
+      <TouchableOpacity
+        style={styles.btn}
         onPress={() => {
           navigation.navigate('ShowList');
         }}>
-        Go showList
-      </Text>
+        <Text style={styles.btn_text}>Device Connect</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.btn}
+        onPress={() => {
+          navigation.navigate('Monitor');
+        }}>
+        <Text style={styles.btn_text}>List UP</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -111,25 +121,42 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
   },
+
   carousel_container: {
     width: '100%',
     height: 180,
-    borderWidth: 1,
-    borderColor: 'white',
   },
   carousel_img: {
     width: '95%',
     height: '100%',
-    borderWidth: 3,
-    borderColor: 'red',
   },
   contentContainer: {
     width: '100%',
     display: 'flex',
     justifyContent: 'space-between',
   },
-  text: {
+  user: {
     fontSize: 30,
+    fontWeight: '700',
+    color: '#1EA3D6',
+    marginTop: 40,
+    marginLeft: '5%',
+    marginBottom: 50,
+  },
+  btn: {
+    width: '80%',
+    height: 100,
+    marginLeft: '10%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#0B3E53',
+    borderRadius: 10,
+    marginBottom: 40,
+  },
+  btn_text: {
+    fontSize: 27,
+    fontWeight: '700',
     color: 'white',
   },
 });

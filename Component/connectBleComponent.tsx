@@ -16,6 +16,7 @@ import {
   TouchableOpacity,
   TextInput,
   Image,
+  ScrollView,
 } from 'react-native';
 
 const SECONDS_TO_SCAN_FOR = 7;
@@ -27,6 +28,7 @@ const CHARACTERISTIC_UUID_TX = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
 
 // const targetDeviceId = 'A0:76:4E:E7:FC:6E';
 // const targetDeviceId = 'A0:76:4E:E7:42:02';
+// const searchDeviceId = 'A0:76:4E';
 const targetDeviceId = 'A0:76:4E:E2:7C:EE';
 const targetDeviceName = 'ESP32_231001';
 const ALLOW_DUPLICATES = true;
@@ -49,6 +51,7 @@ import HomeComponent from './home';
 import {parse} from 'react-native-svg';
 const BleManagerModule = NativeModules.BleManager;
 const bleManagerEmitter = new NativeEventEmitter(BleManagerModule);
+
 async function requestLocationPermission() {
   try {
     const granted = await PermissionsAndroid.request(
@@ -282,7 +285,6 @@ const ConnectBleComponent = ({route}) => {
   function sleep(ms: number) {
     return new Promise<void>(resolve => setTimeout(resolve, ms));
   }
-
   useEffect(() => {
     try {
       BleManager.start({showAlert: false})
@@ -383,23 +385,29 @@ const ConnectBleComponent = ({route}) => {
   };
 
   const renderItem = ({item}: {item: Peripheral}) => {
+    // if (item.id.includes(searchDeviceId)) {
     if (item.id === targetDeviceId) {
       return (
         <TouchableHighlight
           onPress={() => {
             togglePeripheralConnection(item);
           }}
-          key={item.id}>
+          key={item.id}
+          style={{
+            ...styles.touch_box,
+            // backgroundColor: item.connecting ? 'white' : 'white',
+            // opacity: item.connecting ? 1 : 0.35,
+          }}>
           <View style={styles.row}>
-            {/* <Text style={styles.peripheralName}>{targetDeviceName}</Text> */}
             <Image
               source={require('../assets/images/device_icon.png')}
               style={styles.icon}
             />
-            <Text style={styles.peripheralName}>1</Text>
+            {/* <Text style={styles.peripheralName}>{targetDeviceName}</Text> */}
+            <Text style={styles.peripheralName}>{item.id}</Text>
             <Image
               source={
-                rawDatas === ''
+                PPG === ''
                   ? require('../assets/images/connecting_img1.png')
                   : require('../assets/images/connecting_img2.png')
               }
@@ -452,12 +460,12 @@ const ConnectBleComponent = ({route}) => {
     return byteArray;
   };
   const {data} = route.params;
-  console.log('data : ', data);
+
   return (
     <>
       <View style={styles.container}>
-        <Text style={styles.title}>{data.title}</Text>
-        <View style={styles.img_box}>
+        {/* <Text style={styles.title}>{data.title}</Text> */}
+        {/* <View style={styles.img_box}>
           <TouchableOpacity style={styles.ble_touch} onPress={startScan}>
             {isScanning ? (
               <Image
@@ -475,20 +483,25 @@ const ConnectBleComponent = ({route}) => {
           <Text style={styles.ble_text}>
             Turn on the Bluetooth connection{'\n'}of the device.
           </Text>
+        </View> */}
+        {/* <Text style={{...styles.title, marginTop: 20}}>Device list</Text> */}
+        <View style={styles.list_box}>
+          <FlatList
+            data={Array.from(peripherals.values())}
+            contentContainerStyle={{rowGap: 12}}
+            renderItem={renderItem}
+            keyExtractor={item => item.id}
+          />
         </View>
-        <Text style={{...styles.title, marginTop: 20}}>Device list</Text>
-      </View>
-      <View style={styles.list_box}>
-        <FlatList
-          data={Array.from(peripherals.values())}
-          contentContainerStyle={{rowGap: 12}}
-          renderItem={renderItem}
-          keyExtractor={item => item.id}
-        />
-        <Text> aaa</Text>
       </View>
 
       <SafeAreaView style={styles.body}>
+        <Pressable
+          style={styles.scanButton}
+          onPress={handleButtonClick}
+          android_ripple={{color: 'lightgray'}}>
+          <Text style={styles.scanButtonText}>버튼</Text>
+        </Pressable>
         <Pressable
           style={styles.scanButton}
           onPress={startScan}
@@ -497,18 +510,12 @@ const ConnectBleComponent = ({route}) => {
             {isScanning ? '탐색중...' : '주변 기기 탐색'}
           </Text>
         </Pressable>
-        <FlatList
-          data={Array.from(peripherals.values())}
-          contentContainerStyle={{rowGap: 12}}
-          renderItem={renderItem}
-          keyExtractor={item => item.id}
-        />
         <TextInput
           placeholder="숫자를 입력하세요"
           onChangeText={text => setInputValue(text)}
           value={inputValue}
           keyboardType="numeric"
-          style={styles.inputText}
+          style={{...styles.inputText, color: 'white'}}
         />
 
         <Pressable
@@ -532,7 +539,7 @@ const ConnectBleComponent = ({route}) => {
           </Text>
         </Pressable>
 
-        <Pressable
+        {/* <Pressable
           style={styles.scanButton}
           onPress={() => {
             setRawDatas('');
@@ -542,7 +549,7 @@ const ConnectBleComponent = ({route}) => {
           <Text style={styles.scanButtonText}>
             <Text style={styles.scanButtonText}>초기화</Text>
           </Text>
-        </Pressable>
+        </Pressable> */}
       </SafeAreaView>
     </>
   );
@@ -554,13 +561,16 @@ const styles = StyleSheet.create({
     height: 'auto',
     display: 'flex',
     padding: 0,
+    alignItems: 'center',
   },
   title: {
+    width: '100%',
     marginTop: 40,
-    marginLeft: 30,
+    marginLeft: 60,
     fontSize: 30,
     fontWeight: '700',
     color: 'white',
+    textAlign: 'left',
   },
   img_box: {
     width: '100%',
@@ -615,33 +625,45 @@ const styles = StyleSheet.create({
   },
   list_box: {
     width: '90%',
-    height: 'auto',
+    height: '40%',
+    marginTop: 20,
+    borderRadius: 10,
+    backgroundColor: '#2D7C9B',
+    display: 'flex',
+    alignItems: 'center',
     borderWidth: 1,
     borderColor: 'white',
+    marginBottom: 0,
   },
   row: {
-    width: windowWidth * 0.86,
+    width: windowWidth * 0.8,
     height: 47,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingLeft: 4,
     paddingRight: 14,
-    elevation: 2,
-    backgroundColor: 'gray',
-    borderRadius: 6,
-    shadowColor: '#000000',
+    // elevation: 2,
+    // backgroundColor: 'gray',
+    // borderRadius: 6,
+    // shadowColor: '#000000',
     // shadowOffset: {width: 1, height: 1},
-    shadowOpacity: 0.8,
-    shadowRadius: 8,
-    marginTop: 36,
+    // shadowOpacity: 0.8,
+    // shadowRadius: 8,
+    // opacity: 0.25,
+  },
+  touch_box: {
+    height: 47,
+    marginTop: 15,
+    marginBottom: 15,
   },
   icon: {
     width: 30,
     height: 30,
   },
   peripheralName: {
-    width: 240,
+    width: windowWidth * 0.55,
+    marginLeft: 5,
     fontSize: 16,
     fontWeight: 'bold',
     color: 'white',

@@ -8,6 +8,7 @@ import {
   TextInput,
   TouchableOpacity,
   Modal,
+  KeyboardAvoidingView,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 // const windowWidth = Dimensions.get('window').width;
@@ -20,7 +21,14 @@ const LogInComponent = () => {
   return (
     <>
       <View style={styles.login_container}>
+        <View style={styles.logo_box}>
+          <Image
+            source={require('../assets/images/logo.png')}
+            style={styles.logo_image}
+          />
+        </View>
         <Text style={styles.title}>Login</Text>
+
         <View style={styles.input_container}>
           <Image
             source={require('../assets/images/login_icon1.png')}
@@ -58,7 +66,7 @@ const LogInComponent = () => {
           <TouchableOpacity
             style={styles.btn}
             onPress={() => {
-              navigation.navigate('Home');
+              navigation.navigate('Home', {data: userID});
             }}>
             <Text style={styles.btn_text}>Log In</Text>
           </TouchableOpacity>
@@ -96,17 +104,35 @@ const LogInComponent = () => {
 };
 
 const styles = StyleSheet.create({
+  keyboard: {
+    flex: 1,
+    // position: 'absolute',
+    // bottom: 0,
+    justifyContent: 'flex-end',
+  },
   login_container: {
+    height: 'auto',
     flex: 1,
     alignItems: 'flex-start',
-    position: 'relative',
+    // position: 'relative',
+  },
+  logo_box: {
+    width: '100%',
+    height: 55,
+    display: 'flex',
+    alignItems: 'center',
+    marginTop: 50,
+  },
+  logo_image: {
+    width: 100,
+    height: 55,
   },
   title: {
     textAlign: 'left',
     fontSize: 32,
     fontWeight: '800',
     fontFamily: 'inter',
-    marginTop: 140,
+    marginTop: 80,
     marginBottom: 80,
     marginLeft: 40,
     color: '#1EA3D6',

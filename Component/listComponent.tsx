@@ -11,30 +11,37 @@ import {
 import {useNavigation} from '@react-navigation/native';
 const ListComponent = ({data}) => {
   const navigation = useNavigation();
-  console.log('data : ', data);
   return (
     <View style={styles.list_box}>
       {data.map((petData, index) => {
         return (
           <View style={styles.pet_box} key={index}>
-            <Text style={styles.pet_title}>{petData.title}</Text>
-            <View style={styles.content_box}>
-              <Text style={styles.pet_content}>{petData.name}</Text>
-            </View>
-            <View style={styles.content_box}>
-              <Text style={styles.pet_content}>{petData.breed}</Text>
-            </View>
-            <View style={styles.content_box_container}>
-              <View style={styles.content_box2}>
-                <Text style={styles.pet_content2}>{petData.weight}kg</Text>
+            <TouchableOpacity
+              style={styles.touch_box}
+              onPress={() => {
+                navigation.navigate('ShowData', {data: petData});
+              }}>
+              <Text style={styles.pet_title}>{petData.title}</Text>
+              <View style={styles.content_box}>
+                <Text style={styles.pet_content}>{petData.name}</Text>
               </View>
-              <View style={styles.content_box2}>
-                <Text style={styles.pet_content2}>{petData.age} years old</Text>
+              <View style={styles.content_box}>
+                <Text style={styles.pet_content}>{petData.breed}</Text>
               </View>
-            </View>
-            <View style={styles.content_box}>
-              <Text style={styles.pet_content}>{petData.sex}</Text>
-            </View>
+              <View style={styles.content_box_container}>
+                <View style={styles.content_box2}>
+                  <Text style={styles.pet_content2}>{petData.weight}kg</Text>
+                </View>
+                <View style={styles.content_box2}>
+                  <Text style={styles.pet_content2}>
+                    {petData.age} years old
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.content_box}>
+                <Text style={styles.pet_content}>{petData.sex}</Text>
+              </View>
+            </TouchableOpacity>
             <TouchableOpacity
               onPress={() => {
                 navigation.navigate('ConnectBle', {data: petData});
@@ -67,6 +74,12 @@ const styles = StyleSheet.create({
     display: 'flex',
     alignItems: 'center',
     marginBottom: 20,
+  },
+  touch_box: {
+    width: '100%',
+    height: 'auto',
+    display: 'flex',
+    alignItems: 'center',
   },
   pet_title: {
     fontSize: 30,
