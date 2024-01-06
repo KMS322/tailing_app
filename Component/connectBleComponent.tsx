@@ -17,8 +17,11 @@ import {
   TextInput,
   Image,
   ScrollView,
+  Alert,
 } from 'react-native';
-
+import axios from 'axios';
+import {useNavigation} from '@react-navigation/native';
+import {usePetContext} from '../AppContext';
 const SECONDS_TO_SCAN_FOR = 7;
 const SERVICE_UUIDS: string[] = [];
 const windowWidth = Dimensions.get('window').width;
@@ -28,7 +31,7 @@ const CHARACTERISTIC_UUID_TX = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
 
 // const targetDeviceId = 'A0:76:4E:E7:FC:6E';
 // const targetDeviceId = 'A0:76:4E:E7:42:02';
-// const searchDeviceId = 'A0:76:4E';
+const searchDeviceId = 'A0:76:4E';
 const targetDeviceId = 'A0:76:4E:E2:7C:EE';
 const targetDeviceName = 'ESP32_231001';
 const ALLOW_DUPLICATES = true;
@@ -85,6 +88,7 @@ declare module 'react-native-ble-manager' {
 }
 
 const ConnectBleComponent = ({route}) => {
+  const navigation = useNavigation();
   const [isScanning, setIsScanning] = useState(false);
   const [peripherals, setPeripherals] = useState(
     new Map<Peripheral['id'], Peripheral>(),
@@ -153,7 +157,29 @@ const ConnectBleComponent = ({route}) => {
     );
     // setRawDatas(0);
   };
+  const [currentTime, setCurrentTime] = useState('');
+  const formatDateTime = (date: Date): string => {
+    const updatedDate = new Date(date);
+    const options = {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    };
 
+    return updatedDate.toLocaleString('ko-KR', options);
+  };
+  const checkCurrentTime = () => {
+    const formattedTime = formatDateTime(new Date());
+    // console.log(`Current Time in Korea: ${formattedTime}`);
+    return formattedTime;
+  };
+  const [dataStorage, setDataStorage] = useState<
+    {time: string; ppg: number; pulse: number; factor: number}[]
+  >([]);
   const handleUpdateValueForCharacteristic = (
     data: BleManagerDidUpdateValueForCharacteristicEvent,
   ) => {
@@ -167,6 +193,44 @@ const ConnectBleComponent = ({route}) => {
     setPPG(truncatedNum1);
     setFactor(num3);
     setPulse(truncatedNum2);
+    setDataStorage(prevData => [
+      ...prevData,
+      {
+        time: checkCurrentTime().toLocaleString(),
+        ppg: truncatedNum1,
+        pulse: truncatedNum2,
+        factor: num3,
+      },
+    ]);
+  };
+  const sendObject = async () => {
+    // const apiUrl = 'http://10.0.2.2:8001/object';
+    // const apiUrl = 'http://localhost:8001/object';
+    // const apiUrl = 'http://27.96.128.206:8001/object';
+    const apiUrl = 'http://115.85.183.166:8001/object';
+    try {
+      const response = await axios.post(apiUrl, dataStorage);
+      console.log('Data sent successfully');
+      if (response.status === 200) {
+        Alert.alert('Success Message', 'send success');
+        setDataStorage([]);
+      }
+    } catch (error) {
+      console.error('Error sending data:', error);
+      if (error.response) {
+        // 서버로부터 응답을 받았으나, 응답 코드가 2xx가 아닌 경우
+        Alert.alert(
+          'Error',
+          `Server responded with status ${error.response.status}`,
+        );
+      } else if (error.request) {
+        // 요청을 보냈지만 응답을 받지 못한 경우
+        Alert.alert('Error', 'No response received from the server');
+      } else {
+        // 오류를 발생시킨 요청 자체에 문제가 있는 경우
+        Alert.alert('Error', 'Request failed:', error.message);
+      }
+    }
   };
 
   const handleDiscoverPeripheral = (peripheral: Peripheral) => {
@@ -385,8 +449,8 @@ const ConnectBleComponent = ({route}) => {
   };
 
   const renderItem = ({item}: {item: Peripheral}) => {
-    // if (item.id.includes(searchDeviceId)) {
-    if (item.id === targetDeviceId) {
+    if (item.id && item.id.includes(searchDeviceId)) {
+      // if (item.id === targetDeviceId) {
       return (
         <TouchableHighlight
           onPress={() => {
@@ -459,13 +523,13 @@ const ConnectBleComponent = ({route}) => {
     }
     return byteArray;
   };
-  const {data} = route.params;
 
+  const {pets} = usePetContext();
   return (
     <>
       <View style={styles.container}>
-        {/* <Text style={styles.title}>{data.title}</Text> */}
-        {/* <View style={styles.img_box}>
+        <Text style={styles.title}>{pets[0].title}</Text>
+        <View style={styles.img_box}>
           <TouchableOpacity style={styles.ble_touch} onPress={startScan}>
             {isScanning ? (
               <Image
@@ -483,8 +547,8 @@ const ConnectBleComponent = ({route}) => {
           <Text style={styles.ble_text}>
             Turn on the Bluetooth connection{'\n'}of the device.
           </Text>
-        </View> */}
-        {/* <Text style={{...styles.title, marginTop: 20}}>Device list</Text> */}
+        </View>
+        <Text style={{...styles.title, marginTop: 20}}>Device list</Text>
         <View style={styles.list_box}>
           <FlatList
             data={Array.from(peripherals.values())}
@@ -493,64 +557,29 @@ const ConnectBleComponent = ({route}) => {
             keyExtractor={item => item.id}
           />
         </View>
-      </View>
 
-      <SafeAreaView style={styles.body}>
-        <Pressable
-          style={styles.scanButton}
-          onPress={handleButtonClick}
-          android_ripple={{color: 'lightgray'}}>
-          <Text style={styles.scanButtonText}>버튼</Text>
-        </Pressable>
-        <Pressable
-          style={styles.scanButton}
-          onPress={startScan}
-          android_ripple={{color: 'lightgray'}}>
-          <Text style={styles.scanButtonText}>
-            {isScanning ? '탐색중...' : '주변 기기 탐색'}
-          </Text>
-        </Pressable>
-        <TextInput
-          placeholder="숫자를 입력하세요"
-          onChangeText={text => setInputValue(text)}
-          value={inputValue}
-          keyboardType="numeric"
-          style={{...styles.inputText, color: 'white'}}
-        />
-
-        <Pressable
-          style={styles.scanButton}
-          // onPress={handleSendData}
-          onPress={() => {
-            sendData(inputValue, connectedDeviceId);
-            setInputValue('');
-          }}
-          android_ripple={{color: 'lightgray'}}>
-          <Text style={styles.scanButtonText}>전송</Text>
-        </Pressable>
-        <Pressable style={styles.scanButton}>
-          <Text style={styles.scanButtonText}>
-            <Text style={styles.scanButtonText}>{factor}</Text>
-          </Text>
-          <Text style={styles.scanButtonText}>
+        <SafeAreaView style={styles.body}>
+          <Pressable
+            style={styles.scanButton}
+            onPress={startScan}
+            android_ripple={{color: 'lightgray'}}>
             <Text style={styles.scanButtonText}>
-              ppg : {PPG}, pulse: {pulse}, factor : {factor}
+              {isScanning ? '탐색중...' : '주변 기기 탐색'}
             </Text>
-          </Text>
-        </Pressable>
-
-        {/* <Pressable
-          style={styles.scanButton}
-          onPress={() => {
-            setRawDatas('');
-            console.log(rawDatas);
-          }}
-          android_ripple={{color: 'lightgray'}}>
-          <Text style={styles.scanButtonText}>
-            <Text style={styles.scanButtonText}>초기화</Text>
-          </Text>
-        </Pressable> */}
-      </SafeAreaView>
+          </Pressable>
+          <SafeAreaView style={{...styles.body, marginTop: 20}}>
+            <Pressable style={styles.scanButton}>
+              <Text style={styles.scanButtonText}>factor : {factor}</Text>
+            </Pressable>
+            <Pressable style={styles.scanButton}>
+              <Text style={styles.scanButtonText}>ppg : {PPG}</Text>
+            </Pressable>
+            <Pressable style={styles.scanButton}>
+              <Text style={styles.scanButtonText}>pulse: {pulse}</Text>
+            </Pressable>
+          </SafeAreaView>
+        </SafeAreaView>
+      </View>
     </>
   );
 };
@@ -581,8 +610,6 @@ const styles = StyleSheet.create({
   ble_touch: {
     width: 300,
     height: 300,
-    borderWidth: 1,
-    borderColor: 'white',
   },
   ble_img: {
     width: 300,
@@ -619,22 +646,28 @@ const styles = StyleSheet.create({
     marginTop: 22,
     borderRadius: 6,
   },
+  input_box: {
+    width: '80%',
+    height: 41,
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
   scanButtonText: {
-    fontSize: 12,
+    fontSize: 20,
     color: 'white',
   },
   list_box: {
     width: '90%',
-    height: '40%',
+    height: '25%',
     marginTop: 20,
     borderRadius: 10,
     backgroundColor: '#2D7C9B',
     display: 'flex',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'white',
     marginBottom: 0,
   },
+
   row: {
     width: windowWidth * 0.8,
     height: 47,
@@ -679,11 +712,13 @@ const styles = StyleSheet.create({
     color: 'white',
   },
   inputText: {
-    width: 207,
+    width: '70%',
     height: 41,
     marginTop: 22,
     borderWidth: 1,
     borderColor: '#12B6D1',
+    paddingLeft: 20,
+    // textAlign: 'center',
   },
 });
 export default ConnectBleComponent;

@@ -158,10 +158,10 @@ const ShowDataComponent = ({route}) => {
   return (
     <ScrollView>
       <View style={styles.container}>
-        <Text style={styles.title}>{data.title}</Text>
+        <Text style={styles.title}>{data[0].title}</Text>
         <View style={styles.name_box}>
-          <Text style={styles.pet_breed}>{data.breed}</Text>
-          <Text style={styles.pet_name}>{data.name}</Text>
+          <Text style={styles.pet_breed}>{data[0].breed}</Text>
+          <Text style={styles.pet_name}>{data[0].name}</Text>
         </View>
         <View style={styles.img_box}>
           <Image
@@ -241,8 +241,6 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
     height: 'auto',
-    borderWidth: 1,
-    borderColor: 'red',
     display: 'flex',
     alignItems: 'center',
   },

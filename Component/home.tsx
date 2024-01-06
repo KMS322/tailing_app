@@ -12,6 +12,17 @@ import {
 const windowWidth = Dimensions.get('window').width;
 
 const HomeComponent = ({route}) => {
+  const [pets, setPets] = useState([
+    {
+      id: 1,
+      title: 'CAGE 1',
+      name: 'Sulgoo',
+      breed: 'Maltaes',
+      weight: '2.2',
+      age: '5',
+      sex: 'Male',
+    },
+  ]);
   const userID = route.params.data;
   const navigation = useNavigation();
 

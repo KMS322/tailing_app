@@ -10,28 +10,31 @@ import ConnectBleComponent from './Component/connectBleComponent';
 import ShowDataComponent from './Component/showDataComponent';
 import MonitorComponent from './Component/monitorComponent';
 import TestComponent from './Component/testComponent';
+import {PetProvider} from './AppContext';
 const Stack = createNativeStackNavigator();
 
-const App = () => {
+const App: React.FC = () => {
   return (
     <>
-      <NavigationContainer>
-        <Stack.Navigator
-          screenOptions={{
-            headerShown: false,
-            contentStyle: {backgroundColor: '#121212'},
-          }}
-          initialRouteName="Test">
-          <Stack.Screen name="Intro" component={Intro} />
-          <Stack.Screen name="Login" component={LogInComponent} />
-          <Stack.Screen name="Home" component={HomeComponent} />
-          <Stack.Screen name="ShowList" component={ShowListComponent} />
-          <Stack.Screen name="ConnectBle" component={ConnectBleComponent} />
-          <Stack.Screen name="ShowData" component={ShowDataComponent} />
-          <Stack.Screen name="Monitor" component={MonitorComponent} />
-          <Stack.Screen name="Test" component={TestComponent} />
-        </Stack.Navigator>
-      </NavigationContainer>
+      <PetProvider>
+        <NavigationContainer>
+          <Stack.Navigator
+            screenOptions={{
+              headerShown: false,
+              contentStyle: {backgroundColor: '#121212'},
+            }}
+            initialRouteName="Intro">
+            <Stack.Screen name="Intro" component={Intro} />
+            <Stack.Screen name="Login" component={LogInComponent} />
+            <Stack.Screen name="Home" component={HomeComponent} />
+            <Stack.Screen name="ShowList" component={ShowListComponent} />
+            <Stack.Screen name="ConnectBle" component={ConnectBleComponent} />
+            <Stack.Screen name="ShowData" component={ShowDataComponent} />
+            <Stack.Screen name="Monitor" component={MonitorComponent} />
+            <Stack.Screen name="Test" component={TestComponent} />
+          </Stack.Navigator>
+        </NavigationContainer>
+      </PetProvider>
     </>
   );
 };

@@ -101,7 +101,7 @@ const ShowListComponent = () => {
         ) : openPopup ? (
           ''
         ) : (
-          <ListComponent data={pets} />
+          <ListComponent />
         )}
 
         <View style={openPopup ? styles.create_popup : {display: 'none'}}>

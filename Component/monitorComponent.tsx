@@ -1,57 +1,21 @@
 import React from 'react';
 import {View, StyleSheet, Image, Text, TouchableOpacity} from 'react-native';
+import {useNavigation} from '@react-navigation/native';
+import {usePetContext} from '../AppContext';
 const MonitorComponent = () => {
+  const {pets} = usePetContext();
+  const navigation = useNavigation();
   return (
     <View style={styles.container}>
       <Text style={styles.title}>LIST UP</Text>
       <View style={styles.list_container}>
-        <TouchableOpacity style={styles.list_box}>
-          <Text style={styles.list_title}>CAGE 1</Text>
-          <Text style={styles.list_name}>Sulgoo</Text>
-          <View style={styles.icon_box}>
-            <Image
-              source={require('../assets/images/icon_img1.png')}
-              style={styles.icon}
-            />
-            <Image
-              source={require('../assets/images/icon_img2.png')}
-              style={styles.icon}
-            />
-            <Image
-              source={require('../assets/images/icon_img3.png')}
-              style={styles.icon}
-            />
-            <Image
-              source={require('../assets/images/icon_img4.png')}
-              style={styles.icon}
-            />
-          </View>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.list_box}>
-          <Text style={styles.list_title}>CAGE 1</Text>
-          <Text style={styles.list_name}>Sulgoo</Text>
-          <View style={styles.icon_box}>
-            <Image
-              source={require('../assets/images/icon_img1.png')}
-              style={styles.icon}
-            />
-            <Image
-              source={require('../assets/images/icon_img2.png')}
-              style={styles.icon}
-            />
-            <Image
-              source={require('../assets/images/icon_img3.png')}
-              style={styles.icon}
-            />
-            <Image
-              source={require('../assets/images/icon_img4.png')}
-              style={styles.icon}
-            />
-          </View>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.list_box}>
-          <Text style={styles.list_title}>CAGE 1</Text>
-          <Text style={styles.list_name}>Sulgoo</Text>
+        <TouchableOpacity
+          style={styles.list_box}
+          onPress={() => {
+            navigation.navigate('ShowData', {data: pets});
+          }}>
+          <Text style={styles.list_title}>{pets[0].title}</Text>
+          <Text style={styles.list_name}>{pets[0].name}</Text>
           <View style={styles.icon_box}>
             <Image
               source={require('../assets/images/icon_img1.png')}

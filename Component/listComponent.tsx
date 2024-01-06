@@ -9,17 +9,19 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
-const ListComponent = ({data}) => {
+import {usePetContext} from '../AppContext';
+const ListComponent: React.FC = () => {
+  const {pets} = usePetContext();
   const navigation = useNavigation();
   return (
     <View style={styles.list_box}>
-      {data.map((petData, index) => {
+      {pets.map((petData, index) => {
         return (
           <View style={styles.pet_box} key={index}>
             <TouchableOpacity
               style={styles.touch_box}
               onPress={() => {
-                navigation.navigate('ShowData', {data: petData});
+                navigation.navigate('ConnectBle');
               }}>
               <Text style={styles.pet_title}>{petData.title}</Text>
               <View style={styles.content_box}>
@@ -42,12 +44,13 @@ const ListComponent = ({data}) => {
                 <Text style={styles.pet_content}>{petData.sex}</Text>
               </View>
             </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => {
-                navigation.navigate('ConnectBle', {data: petData});
-              }}>
-              <Text style={styles.connect_btn}>Connection Settings</Text>
-            </TouchableOpacity>
+            {/* <TouchableOpacity 
+            // onPress={() => {
+            //   navigation.navigate('ConnectBle', {data: petData});
+            // }}
+            // >*/}
+            <Text style={styles.connect_btn}>Connection Settings</Text>
+            {/* </TouchableOpacity> */}
           </View>
         );
       })}
