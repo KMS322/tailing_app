@@ -9,32 +9,37 @@ const MonitorComponent = () => {
     <View style={styles.container}>
       <Text style={styles.title}>LIST UP</Text>
       <View style={styles.list_container}>
-        <TouchableOpacity
-          style={styles.list_box}
-          onPress={() => {
-            navigation.navigate('ShowData', {data: pets});
-          }}>
-          <Text style={styles.list_title}>{pets[0].title}</Text>
-          <Text style={styles.list_name}>{pets[0].name}</Text>
-          <View style={styles.icon_box}>
-            <Image
-              source={require('../assets/images/icon_img1.png')}
-              style={styles.icon}
-            />
-            <Image
-              source={require('../assets/images/icon_img2.png')}
-              style={styles.icon}
-            />
-            <Image
-              source={require('../assets/images/icon_img3.png')}
-              style={styles.icon}
-            />
-            <Image
-              source={require('../assets/images/icon_img4.png')}
-              style={styles.icon}
-            />
-          </View>
-        </TouchableOpacity>
+        {pets.map((pet, index) => {
+          return (
+            <TouchableOpacity
+              style={styles.list_box}
+              onPress={() => {
+                navigation.navigate('ShowData', {data: pet});
+              }}
+              key={index}>
+              <Text style={styles.list_title}>{pet.title}</Text>
+              <Text style={styles.list_name}>{pet.name}</Text>
+              <View style={styles.icon_box}>
+                <Image
+                  source={require('../assets/images/icon_img1.png')}
+                  style={styles.icon}
+                />
+                <Image
+                  source={require('../assets/images/icon_img2.png')}
+                  style={styles.icon}
+                />
+                <Image
+                  source={require('../assets/images/icon_img3.png')}
+                  style={styles.icon}
+                />
+                <Image
+                  source={require('../assets/images/icon_img4.png')}
+                  style={styles.icon}
+                />
+              </View>
+            </TouchableOpacity>
+          );
+        })}
       </View>
     </View>
   );
@@ -50,7 +55,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 25,
     fontWeight: '700',
-    color: 'white',
+    color: '#1EA3D6',
     marginTop: 20,
   },
   list_container: {
@@ -65,8 +70,8 @@ const styles = StyleSheet.create({
   list_box: {
     width: '48%',
     height: 110,
-    borderWidth: 1,
-    borderColor: 'white',
+    borderWidth: 2,
+    borderColor: '#0B3E53',
     borderRadius: 10,
     display: 'flex',
     alignItems: 'center',

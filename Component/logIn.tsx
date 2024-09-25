@@ -59,6 +59,7 @@ const LogInComponent = () => {
             placeholder="PASSWORD"
             placeholderTextColor="#1EA3D6"
             ref={usernameRef}
+            secureTextEntry={true}
           />
         </View>
         <Text style={styles.text}>Forgot password?</Text>
@@ -158,7 +159,7 @@ const styles = StyleSheet.create({
     marginLeft: 15,
   },
   text: {
-    fontSize: 12,
+    fontSize: 13,
     color: '#B1B0AF',
     fontWeight: '500',
     alignSelf: 'center',

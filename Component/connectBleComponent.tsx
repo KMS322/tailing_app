@@ -14,14 +14,13 @@ import {
   Pressable,
   Dimensions,
   TouchableOpacity,
-  TextInput,
   Image,
-  ScrollView,
   Alert,
 } from 'react-native';
+import FastImage from 'react-native-fast-image';
 import axios from 'axios';
 import {useNavigation} from '@react-navigation/native';
-import {usePetContext} from '../AppContext';
+import {useDeviceIdContext} from '../AppContext';
 const SECONDS_TO_SCAN_FOR = 7;
 const SERVICE_UUIDS: string[] = [];
 const windowWidth = Dimensions.get('window').width;
@@ -51,6 +50,7 @@ import BleManager, {
   Peripheral,
 } from 'react-native-ble-manager';
 import HomeComponent from './home';
+import AnimationBleImage from './animationBleImage';
 import {parse} from 'react-native-svg';
 const BleManagerModule = NativeModules.BleManager;
 const bleManagerEmitter = new NativeEventEmitter(BleManagerModule);
@@ -88,7 +88,8 @@ declare module 'react-native-ble-manager' {
 }
 
 const ConnectBleComponent = ({route}) => {
-  const navigation = useNavigation();
+  const {deviceId, setDeviceId} = useDeviceIdContext();
+  const {data} = route.params;
   const [isScanning, setIsScanning] = useState(false);
   const [peripherals, setPeripherals] = useState(
     new Map<Peripheral['id'], Peripheral>(),
@@ -259,11 +260,8 @@ const ConnectBleComponent = ({route}) => {
   const connectPeripheral = async (peripheral: Peripheral) => {
     try {
       if (peripheral) {
-        console.log('연결된 device의 peripheral.id : ', peripheral.id);
-        console.log(
-          '연결된 device의 peripheral.id의 타입 : ',
-          typeof peripheral.id,
-        );
+        setDeviceId(peripheral.id);
+        console.log('context deviceId : ', deviceId);
         addOrUpdatePeripheral(peripheral.id, {...peripheral, connecting: true});
         await BleManager.connect(peripheral.id);
         console.debug(`[connectPeripheral][${peripheral.id}] connected.`);
@@ -331,6 +329,7 @@ const ConnectBleComponent = ({route}) => {
           }
         }
         console.log('peripheral.connected : ', peripheral.connected);
+        console.log('peripheral.id : ', peripheral.id);
         let p = peripherals.get(peripheral.id);
         if (p) {
           addOrUpdatePeripheral(peripheral.id, {...peripheral, rssi});
@@ -471,7 +470,7 @@ const ConnectBleComponent = ({route}) => {
             <Text style={styles.peripheralName}>{item.id}</Text>
             <Image
               source={
-                PPG === ''
+                PPG === 0
                   ? require('../assets/images/connecting_img1.png')
                   : require('../assets/images/connecting_img2.png')
               }
@@ -524,19 +523,30 @@ const ConnectBleComponent = ({route}) => {
     return byteArray;
   };
 
-  const {pets} = usePetContext();
   return (
     <>
       <View style={styles.container}>
-        <Text style={styles.title}>{pets[0].title}</Text>
-        <View style={styles.img_box}>
-          <TouchableOpacity style={styles.ble_touch} onPress={startScan}>
+        {/* <Text style={styles.title}>{data}</Text> */}
+        {/* <View style={styles.img_box}>
+           <TouchableOpacity style={styles.ble_touch} onPress={startScan}>
             {isScanning ? (
-              <Image
-                source={require('../assets/images/bleConnect_img.png')}
+              // <AnimationBleImage />
+              // <Image
+              //   source={require('../assets/images/blegif.gif')}
+              //   style={styles.ble_img}
+              // />
+              <FastImage
+                source={require('../assets/images/blegif.gif')}
                 style={styles.ble_img}
+                resizeMode={FastImage.resizeMode.contain}
               />
             ) : (
+              // <Video
+              //   source={require('../assets/images/blegif.mp4')}
+              //   style={styles.ble_img}
+              //   controls // 플레이어 컨트롤러를 표시할지 여부
+              //   resizeMode="cover" // 화면 크기에 맞게 조절
+              // />
               <Image
                 source={require('../assets/images/bleStart_img.png')}
                 style={styles.ble_img}
@@ -547,8 +557,8 @@ const ConnectBleComponent = ({route}) => {
           <Text style={styles.ble_text}>
             Turn on the Bluetooth connection{'\n'}of the device.
           </Text>
-        </View>
-        <Text style={{...styles.title, marginTop: 20}}>Device list</Text>
+        </View> */}
+        <Text style={{...styles.title, marginTop: 40}}>Device list</Text>
         <View style={styles.list_box}>
           <FlatList
             data={Array.from(peripherals.values())}
@@ -620,6 +630,7 @@ const styles = StyleSheet.create({
     color: 'white',
     marginTop: 20,
     textAlign: 'center',
+    lineHeight: 25,
   },
   // -------------------------------------
   btn_box: {
@@ -662,7 +673,9 @@ const styles = StyleSheet.create({
     height: '25%',
     marginTop: 20,
     borderRadius: 10,
-    backgroundColor: '#2D7C9B',
+    backgroundColor: '#05151C',
+    borderWidth: 1,
+    borderColor: '#1EA3D6',
     display: 'flex',
     alignItems: 'center',
     marginBottom: 0,

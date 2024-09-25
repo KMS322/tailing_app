@@ -7,9 +7,11 @@ import LogInComponent from './Component/logIn';
 import HomeComponent from './Component/home';
 import ShowListComponent from './Component/showListComponent';
 import ConnectBleComponent from './Component/connectBleComponent';
+import ConnectBleComponentRaw from './Component/connectBleComponent_raw';
 import ShowDataComponent from './Component/showDataComponent';
 import MonitorComponent from './Component/monitorComponent';
 import TestComponent from './Component/testComponent';
+import animationBleImage from './Component/animationBleImage';
 import {PetProvider} from './AppContext';
 const Stack = createNativeStackNavigator();
 
@@ -23,12 +25,16 @@ const App: React.FC = () => {
               headerShown: false,
               contentStyle: {backgroundColor: '#121212'},
             }}
-            initialRouteName="Intro">
+            initialRouteName="ConnectBle">
             <Stack.Screen name="Intro" component={Intro} />
             <Stack.Screen name="Login" component={LogInComponent} />
             <Stack.Screen name="Home" component={HomeComponent} />
             <Stack.Screen name="ShowList" component={ShowListComponent} />
-            <Stack.Screen name="ConnectBle" component={ConnectBleComponent} />
+            {/* <Stack.Screen name="ConnectBle" component={ConnectBleComponent} /> */}
+            <Stack.Screen
+              name="ConnectBle"
+              component={ConnectBleComponentRaw}
+            />
             <Stack.Screen name="ShowData" component={ShowDataComponent} />
             <Stack.Screen name="Monitor" component={MonitorComponent} />
             <Stack.Screen name="Test" component={TestComponent} />

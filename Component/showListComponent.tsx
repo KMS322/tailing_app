@@ -10,8 +10,10 @@ import {
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import ListComponent from './listComponent';
+import {usePetContext} from '../AppContext';
 const windowWidth = Dimensions.get('window').width;
 const ShowListComponent = () => {
+  const {pets, setPets} = usePetContext();
   const navigation = useNavigation();
   const [openPopup, setOpenPopup] = useState(false);
   const [petTitle, setPetTitle] = useState('');
@@ -20,35 +22,6 @@ const ShowListComponent = () => {
   const [petWeight, setPetWeight] = useState('');
   const [petAge, setPetAge] = useState('');
   const [petSex, setPetSex] = useState('');
-  const [pets, setPets] = useState([
-    {
-      id: 1,
-      title: 'CAGE 1',
-      name: 'Sulgoo',
-      breed: 'Maltaes',
-      weight: '2.2',
-      age: '5',
-      sex: 'Male',
-    },
-    // {
-    //   id: 2,
-    //   title: 'CAGE 2',
-    //   name: 'DryBread',
-    //   breed: 'Chow chow',
-    //   weight: '3.5',
-    //   age: '1',
-    //   sex: 'Female',
-    // },
-    // {
-    //   id: 3,
-    //   title: 'CAGE 3',
-    //   name: 'DryBread',
-    //   breed: 'Chow chow',
-    //   weight: '3.5',
-    //   age: '1',
-    //   sex: 'Female',
-    // },
-  ]);
   const addPets = () => {
     const newPet = {
       id: pets.length + 1,
@@ -239,7 +212,7 @@ const styles = StyleSheet.create({
   },
   btn_box: {
     width: '100%',
-    height: 30,
+    height: 23,
     display: 'flex',
     marginTop: 30,
     flexDirection: 'row',
@@ -248,7 +221,7 @@ const styles = StyleSheet.create({
     paddingRight: 20,
   },
   btn: {
-    width: 30,
+    width: 23,
     height: '100%',
   },
   empty_text: {
@@ -264,10 +237,12 @@ const styles = StyleSheet.create({
     width: '90%',
     height: '85%',
     marginTop: 20,
-    backgroundColor: '#2D7C9B',
+    backgroundColor: '#0C2F3D',
     display: 'flex',
     alignItems: 'center',
     borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#1EA3D6',
   },
   title_text: {
     fontSize: 25,
@@ -295,7 +270,7 @@ const styles = StyleSheet.create({
     borderColor: '#1EA3D6',
     backgroundColor: '#031314',
     borderRadius: 10,
-    paddingLeft: 20,
+    paddingLeft: 15,
     fontSize: 17,
     fontWeight: '700',
     color: 'white',
@@ -315,7 +290,7 @@ const styles = StyleSheet.create({
     borderColor: '#1EA3D6',
     backgroundColor: '#031314',
     borderRadius: 10,
-    paddingLeft: 20,
+    paddingLeft: 15,
     fontSize: 17,
     fontWeight: '700',
     color: 'white',

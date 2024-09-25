@@ -21,7 +21,7 @@ const ListComponent: React.FC = () => {
             <TouchableOpacity
               style={styles.touch_box}
               onPress={() => {
-                navigation.navigate('ConnectBle');
+                navigation.navigate('ConnectBle', {data: petData.title});
               }}>
               <Text style={styles.pet_title}>{petData.title}</Text>
               <View style={styles.content_box}>
@@ -69,14 +69,15 @@ const styles = StyleSheet.create({
   },
   pet_box: {
     width: '49%',
-    height: 270,
+    height: 245,
     borderWidth: 1,
     borderColor: '#1EA3D6',
     backgroundColor: '#0B3E53',
     borderRadius: 10,
     display: 'flex',
     alignItems: 'center',
-    marginBottom: 20,
+    marginTop: 25,
+    // marginBottom: 20,
   },
   touch_box: {
     width: '100%',
@@ -85,10 +86,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   pet_title: {
-    fontSize: 30,
+    fontSize: 25,
     fontWeight: '700',
     marginTop: 10,
-    marginBottom: 15,
+    marginBottom: 10,
     color: 'white',
     textAlign: 'center',
   },
@@ -102,7 +103,7 @@ const styles = StyleSheet.create({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 10,
+    marginBottom: 5,
   },
   pet_content: {
     fontSize: 18,
@@ -115,10 +116,10 @@ const styles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    marginBottom: 5,
   },
   content_box2: {
-    width: '46%',
+    width: '49%',
     height: '100%',
     backgroundColor: '#031314',
     borderWidth: 1,
@@ -127,7 +128,7 @@ const styles = StyleSheet.create({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 10,
+    marginBottom: 5,
   },
   pet_content2: {
     fontSize: 12,
@@ -136,7 +137,7 @@ const styles = StyleSheet.create({
   },
   connect_btn: {
     fontSize: 12,
-    color: '#707070',
+    color: '#B1B0AF',
   },
 });
 export default ListComponent;

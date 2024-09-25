@@ -20,11 +20,14 @@ const SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
 const CHARACTERISTIC_UUID_RX = '6e400002-b5a3-f393-e0A9-e50e24dcca9e';
 const BleManagerModule = NativeModules.BleManager;
 const bleManagerEmitter = new NativeEventEmitter(BleManagerModule);
+import {useDeviceIdContext} from '../AppContext';
+
 const ShowDataComponent = ({route}) => {
+  const {deviceId, setDeviceId} = useDeviceIdContext();
   const [inputValue, setInputValue] = useState('');
   const [currentFactor, setCurrentFactor] = useState('');
   const {data} = route.params;
-  const [connectedDeviceId, setConnectedDeviceId] = useState('');
+  const [connectedDeviceId, setConnectedDeviceId] = useState(deviceId);
   const id = 4;
   const [factor, setFactor] = useState(0);
   const [PPG, setPPG] = useState(0);
@@ -62,6 +65,7 @@ const ShowDataComponent = ({route}) => {
       },
     ],
   });
+  const [totalData, setTotalData] = useState('');
   const [PPGData, setPPGData] = useState(0);
   const convertToAscii = (numbers: number[]): string => {
     const asciiChars: string[] = numbers.map(number =>
@@ -76,17 +80,16 @@ const ShowDataComponent = ({route}) => {
   ) => {
     if (data.value) {
       const asciiResult: string = convertToAscii(data.value);
-      console.log('data : ', data.value);
       const numbersAsStrings = asciiResult.split(',');
       const num1: number = parseInt(numbersAsStrings[0]);
       const num2: number = parseInt(numbersAsStrings[1]);
       let truncatedNum1: number = Math.floor(num1 / 100); // ppg
-      let truncatedNum2: number = Math.round((num2 / 100) * 20);
+      let truncatedNum2: number = Math.round(num2 / 100);
       let num3: number = parseInt(numbersAsStrings[2]);
       setPPG(truncatedNum1);
       setFactor(num3);
       setPulse(truncatedNum2);
-      console.log('모든 데이터', truncatedNum1, ' ', num3, ' ', truncatedNum2);
+      setTotalData(asciiResult);
     }
     return;
   };
@@ -129,6 +132,7 @@ const ShowDataComponent = ({route}) => {
   };
   const sendData = (data: string, connectedDeviceId: string | null) => {
     console.log('입력한 데이터는 : ', inputValue);
+    console.log('connectedDeviceId : ', connectedDeviceId);
     if (!connectedDeviceId) {
       console.log('연결된 장치가 없습니다.');
       return;
@@ -137,7 +141,6 @@ const ShowDataComponent = ({route}) => {
     }
 
     const byteArray = convertDataToByteArray(data);
-
     // BLE 장치로 데이터 송신
     BleManager.write(
       connectedDeviceId,
@@ -158,10 +161,10 @@ const ShowDataComponent = ({route}) => {
   return (
     <ScrollView>
       <View style={styles.container}>
-        <Text style={styles.title}>{data[0].title}</Text>
+        <Text style={styles.title}>{data.title}</Text>
         <View style={styles.name_box}>
-          <Text style={styles.pet_breed}>{data[0].breed}</Text>
-          <Text style={styles.pet_name}>{data[0].name}</Text>
+          <Text style={styles.pet_breed}>{data.breed}</Text>
+          <Text style={styles.pet_name}>{data.name}</Text>
         </View>
         <View style={styles.img_box}>
           <Image
@@ -197,7 +200,7 @@ const ShowDataComponent = ({route}) => {
             <Text style={styles.scanButtonText}>전송</Text>
           </Pressable>
         </View>
-        <Text style={styles.factor_text}>현재 Factor : {currentFactor}</Text>
+        <Text style={styles.factor_text}>Factor : {currentFactor}</Text>
         <View style={styles.data_container}>
           <View style={styles.data_box}>
             <Image
@@ -220,16 +223,20 @@ const ShowDataComponent = ({route}) => {
               source={require('../assets/images/icon_img3.png')}
               style={styles.icon_img}
             />
+            {/* <Text style={styles.data_num}></Text>
+            <Text style={styles.data_name}>BREATHING</Text> */}
             <Text style={styles.data_num}>{factor}</Text>
-            <Text style={styles.data_name}>BREATHING</Text>
+            <Text style={styles.data_name}>Received factor</Text>
           </View>
           <View style={styles.data_box}>
             <Image
               source={require('../assets/images/icon_img4.png')}
               style={styles.icon_img}
             />
-            <Text style={styles.data_num}>120</Text>
-            <Text style={styles.data_name}>TEMPERATURE</Text>
+            {/* <Text style={styles.data_num}></Text>
+            <Text style={styles.data_name}>TEMPERATURE</Text> */}
+            <Text style={styles.data_num}>{totalData}</Text>
+            <Text style={styles.data_name}>Total Data</Text>
           </View>
         </View>
       </View>
@@ -256,7 +263,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#0B3E53',
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'space-around',
+    // justifyContent: 'space-around',
     borderRadius: 15,
     marginTop: 20,
   },
@@ -264,6 +271,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     color: 'white',
+    marginTop: 10,
   },
   pet_name: {
     fontSize: 25,
@@ -280,8 +288,8 @@ const styles = StyleSheet.create({
     marginTop: 15,
   },
   img: {
-    width: 40,
-    height: 20,
+    width: 41,
+    height: 22,
   },
   data_container: {
     width: '90%',
@@ -303,8 +311,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   icon_img: {
-    width: '65%',
-    height: '65%',
+    width: '40%',
+    height: '40%',
   },
   data_num: {
     fontSize: 25,
@@ -315,6 +323,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: 'white',
+    marginTop: 20,
   },
   input_box: {
     width: '80%',
