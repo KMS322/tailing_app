@@ -21,6 +21,9 @@ import {
 } from 'react-native';
 import axios from 'axios';
 import {useNavigation} from '@react-navigation/native';
+import {Buffer} from 'buffer';
+import dayjs from 'dayjs';
+
 const SECONDS_TO_SCAN_FOR = 7;
 const SERVICE_UUIDS: string[] = [];
 const windowWidth = Dimensions.get('window').width;
@@ -31,13 +34,7 @@ const CHARACTERISTIC_UUID_RX = '6e400002-b5a3-f393-e0A9-e50e24dcca9e';
 // const CHARACTERISTIC_UUID_RX = '2A37';
 const CHARACTERISTIC_UUID_TX = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
 
-// const targetDeviceId = 'A0:76:4E:E7:FC:6E';
-// const targetDeviceId = 'A0:76:4E:E7:42:02';
-// const searchDeviceId = 'A0:76:4E';
-const searchDeviceId = '55:99:98';
-// const targetDeviceId = 'A0:76:4E:E2:7C:EE';
-const targetDeviceId = '55:99:98:7E:3F:99';
-const targetDeviceName = 'Zephyr Peripheral3';
+const targetDeviceName = 'Zephy';
 const ALLOW_DUPLICATES = true;
 const convertToAscii = (numbers: number[]): string => {
   const asciiChars: string[] = numbers.map(number =>
@@ -110,6 +107,12 @@ const ConnectBleComponentRaw = ({route}) => {
   const [red, setRed] = useState(0);
   const [temp, setTemp] = useState(0);
 
+  const [irData, setIrData] = useState(0);
+  const [redData, setRedData] = useState(0);
+  const [hrData, setHrData] = useState(0);
+  const [spo2Data, setSpo2Data] = useState(0);
+  const [tempData, setTempData] = useState(0);
+
   // <HomeComponent bleData={rawDatas} />;
 
   peripherals.get;
@@ -127,7 +130,8 @@ const ConnectBleComponentRaw = ({route}) => {
       try {
         console.debug('[startScan] starting scan...');
         setIsScanning(true);
-        BleManager.scan(SERVICE_UUIDS, SECONDS_TO_SCAN_FOR, ALLOW_DUPLICATES, {
+        // BleManager.scan(SERVICE_UUIDS, SECONDS_TO_SCAN_FOR, ALLOW_DUPLICATES, {
+        BleManager.scan([], SECONDS_TO_SCAN_FOR, ALLOW_DUPLICATES, {
           matchMode: BleScanMatchMode.Sticky,
           scanMode: BleScanMode.LowLatency,
           callbackType: BleScanCallbackType.AllMatches,
@@ -187,36 +191,146 @@ const ConnectBleComponentRaw = ({route}) => {
   const [dataStorage, setDataStorage] = useState<
     {time: string; ir: number; red: number}[]
   >([]);
+
+  const [sendDatas, setSendDatas] = useState([]);
+  const parseData = (
+    input: string,
+  ): {
+    time: string | null;
+    red: number | null;
+    ir: number | null;
+    SpO2: number | null;
+    HR: number | null;
+    TEMP: number | null;
+  } => {
+    // 초기 객체 생성, TEMP 필드를 null로 설정
+    let data = {
+      time: null as string | null,
+      red: null as number | null,
+      ir: null as number | null,
+      SpO2: null as number | null,
+      HR: null as number | null,
+      TEMP: null as number | null,
+    };
+
+    // 문자열에서 'TEMP'가 있는지 확인
+    const hasTemp = input.includes('TEMP');
+
+    // 정규 표현식으로 숫자 값 추출
+    const regex =
+      /time\s*:\s*(\d+),\s*red\s*:\s*(\d+),\s*ir\s*:\s*(\d+),\s*SpO2\s*:\s*(-?\d+),\s*HR\s*:\s*(\d+)(?:,\s*TEMP\s*:\s*([\d.]+))?/;
+    const match = input.match(regex);
+
+    if (match) {
+      // data.time = parseInt(match[1]);
+      data.time = dayjs().format('MMDD-HH:mm:ss');
+      data.red = parseInt(match[2]);
+      data.ir = parseInt(match[3]);
+      data.SpO2 = parseInt(match[4]);
+      data.HR = parseInt(match[5]);
+      // console.log('data.time : ', data.time);
+      // console.log('data.red : ', data.red);
+      // console.log('data.ir : ', data.ir);
+      // console.log('data.SpO2 : ', data.SpO2);
+      // console.log('data.HR : ', data.HR);
+      setIrData(data.ir);
+      setRedData(data.red);
+      setHrData(data.HR);
+      setSpo2Data(data.SpO2);
+      // TEMP가 있으면 TEMP 필드에 값을 설정, 없으면 null 유지
+      if (hasTemp) {
+        data.TEMP = parseFloat(match[6]);
+        setTempData(data.TEMP);
+      }
+
+      setSendDatas(prevData => [
+        ...prevData,
+        {
+          red: data.red,
+          ir: data.ir,
+          SpO2: data.SpO2,
+          HR: data.HR,
+          TEMP: data.TEMP,
+          time: data.time,
+        },
+      ]);
+    }
+
+    return data;
+  };
+
+  const sendArray = async () => {
+    try {
+      // const apiUrl = 'http://10.0.2.2:3000/receive/arrs';
+
+      const apiUrl = 'http://211.188.52.135:3000/receive/arrs';
+
+      // const apiUrl = 'http://211.36.133.139:3000/receive/arrs';
+
+      // const apiUrl = 'http://localhost:3000/receive/arrs';
+      // const apiUrl = 'http://27.96.128.206:3000/receive/arrs';
+      // const apiUrl = 'http://localhost:3000/receive/arrs';
+      // console.log('sended dataLists : ', dataLists);
+      const response = await axios.post(apiUrl, sendDatas);
+      if (response.status === 200) {
+        Alert.alert('Success Message', 'send datas');
+        setSendDatas([]);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
   const handleUpdateValueForCharacteristic = (
     data: BleManagerDidUpdateValueForCharacteristicEvent,
   ) => {
-    console.log('Received data:', receivedData);
-    console.log('data.value : ', data.value);
-    const asciiResult: string = convertToAscii(data.value);
-    console.log('asciiResult : ', asciiResult);
-    const parts = asciiResult.split(', ');
-    const irValue = parts[0].split(': ')[1];
-    const redValue = parts[1].split(': ')[1];
-    const tempValue = parts[2] && parts[2].split(': ')[1];
-    const irNumber = parseInt(irValue);
-    const redNumber = parseInt(redValue);
-    const tempNumber = parseInt(tempValue);
+    const {value} = data;
 
-    console.log('irNumber : ', irNumber);
-    console.log('redNumber : ', redNumber);
-    console.log('tempNumber : ', tempNumber);
-    setIr(irNumber);
-    setRed(redNumber);
-    setTemp(tempNumber);
-    setDataStorage(prevData => [
-      ...prevData,
-      {
-        time: checkCurrentTime().toLocaleString(),
-        ir: irNumber,
-        red: redNumber,
-        temp: tempNumber,
-      },
-    ]);
+    // Base64로 인코딩된 값을 디코딩
+    const decodedValue = Buffer.from(value, 'base64').toString('utf-8');
+
+    // console.log('value : ', decodedValue);
+    const parsedData = parseData(decodedValue);
+    console.log('Parsed Data: ', parsedData);
+
+    // console.log('AAAA');
+    // const {value, characteristic} = data;
+    // console.log('value : ', value);
+    // console.log('characteristic : ', characteristic);
+
+    // const decodedData = Buffer.from(value, 'base64').toString();
+
+    // console.log(`Received data from characteristic ${characteristic}:`, decodedData);
+    // console.log('수신된 원시 데이터 : ', value);
+    // const asciiResult: string = convertToAscii2(data.value);
+    // console.log('asciiResult : ', asciiResult); // 변환된 ASCII 데이터 로그
+    // const parsedData = parseData(asciiResult);
+    // console.log('파싱된 데이터:', parsedData);
+    // console.log('data.value : ', data.value);
+    // const asciiResult: string = convertToAscii(data.value);
+    // console.log('asciiResult : ', asciiResult);
+    // const parts = asciiResult.split(', ');
+    // const irValue = parts[0].split(': ')[1];
+    // const redValue = parts[1].split(': ')[1];
+    // const tempValue = parts[2] && parts[2].split(': ')[1];
+    // const irNumber = parseInt(irValue);
+    // const redNumber = parseInt(redValue);
+    // const tempNumber = parseInt(tempValue);
+
+    // console.log('irNumber : ', irNumber);
+    // console.log('redNumber : ', redNumber);
+    // console.log('tempNumber : ', tempNumber);
+    // setIr(irNumber);
+    // setRed(redNumber);
+    // setTemp(tempNumber);
+    // setDataStorage(prevData => [
+    //   ...prevData,
+    //   {
+    //     time: checkCurrentTime().toLocaleString(),
+    //     ir: irNumber,
+    //     red: redNumber,
+    //     temp: tempNumber,
+    //   },
+    // ]);
   };
   const sendObject = async () => {
     // const apiUrl = 'http://10.0.2.2:8001/object';
@@ -249,8 +363,15 @@ const ConnectBleComponentRaw = ({route}) => {
   };
 
   const handleDiscoverPeripheral = (peripheral: Peripheral) => {
-    if (peripheral.name === targetDeviceName) {
-      addOrUpdatePeripheral(peripheral.id, peripheral);
+    // if (peripheral.name === targetDeviceName) {
+    //   addOrUpdatePeripheral(peripheral.id, peripheral);
+    // }
+    if (
+      peripheral.name === 'Zephy45' ||
+      peripheral.advertising.localName === 'Zephy45'
+    ) {
+      // console.log('Zephy45 발견:', peripheral);
+      addOrUpdatePeripheral(peripheral.id, peripheral); // Zephy45만 추가
     }
   };
 
@@ -274,12 +395,14 @@ const ConnectBleComponentRaw = ({route}) => {
   const connectPeripheral = async (peripheral: Peripheral) => {
     try {
       if (peripheral) {
+        // console.log('peripheral : ', peripheral);
         console.log('연결된 device의 peripheral.id : ', peripheral.id);
-        console.log(
-          '연결된 device의 peripheral.id의 타입 : ',
-          typeof peripheral.id,
-        );
+        // console.log(
+        //   '연결된 device의 peripheral.id의 타입 : ',
+        //   typeof peripheral.id,
+        // );
         addOrUpdatePeripheral(peripheral.id, {...peripheral, connecting: true});
+
         await BleManager.connect(peripheral.id);
         console.debug(`[connectPeripheral][${peripheral.id}] connected.`);
 
@@ -288,14 +411,32 @@ const ConnectBleComponentRaw = ({route}) => {
           connecting: false,
           connected: true,
         });
+
         await BleManager.checkState().then(state =>
           console.log(`current BLE state = '${state}'.`),
         );
-        console.debug(`[connectPeripheral][${peripheral.id}] connected.`);
+
+        // 서비스 및 characteristic 가져오기
+        const peripheralData = await BleManager.retrieveServices(peripheral.id);
+        console.debug(
+          `[connectPeripheral][${peripheral.id}] retrieved peripheral services`,
+          peripheralData,
+        );
+
+        const characteristics = peripheralData.characteristics;
+        characteristics?.forEach(async characteristic => {
+          const {characteristic: char, properties} = characteristic;
+          console.log(`Characteristic ${char} properties:`, properties);
+        });
+        await BleManager.checkState().then(state =>
+          console.log(`current BLE state = '${state}'.`),
+        );
+        const sUUID = 'a3c87500-8ed3-4bdf-8a39-a01bebede295';
+        const cUUID = 'a3c87502-8ed3-4bdf-8a39-a01bebede295';
         await BleManager.startNotification(
           peripheral.id,
-          SERVICE_UUID,
-          characteristicUUID,
+          sUUID,
+          cUUID,
           // '6e400001-b5a3-f393-e0a9-e50e24dcca9e',
           // '6e400003-b5a3-f393-e0a9-e50e24dcca9e',
           // '0x2A38',
@@ -303,61 +444,27 @@ const ConnectBleComponentRaw = ({route}) => {
         )
           .then(() => {
             // Success code
-            console.log(
-              'Notification started on characteristic:',
-              characteristicUUID,
-            );
+            console.log('Notification started on characteristic:', cUUID);
           })
           .catch(error => {
             // Failure code
-            console.log('에러는 : ', error);
+            console.log('1111에러는 : ', error);
           });
 
-        await sleep(900);
-
-        /* Test read current RSSI value, retrieve services first */
-        const peripheralData = await BleManager.retrieveServices(peripheral.id);
-        console.debug(
-          `[connectPeripheral][${peripheral.id}] retrieved peripheral services`,
-          peripheralData,
-        );
-
+        // RSSI 읽기
         const rssi = await BleManager.readRSSI(peripheral.id);
         console.debug(
           `[connectPeripheral][${peripheral.id}] retrieved current RSSI value: ${rssi}.`,
         );
 
-        if (peripheralData.characteristics) {
-          for (let characteristic of peripheralData.characteristics) {
-            if (characteristic.descriptors) {
-              for (let descriptor of characteristic.descriptors) {
-                try {
-                  let data = await BleManager.readDescriptor(
-                    peripheral.id,
-                    characteristic.service,
-                    characteristic.characteristic,
-                    descriptor.uuid,
-                  );
-                  console.debug(
-                    `[connectPeripheral][${peripheral.id}] descriptor read as:`,
-                    data,
-                  );
-                } catch (error) {
-                  console.error(
-                    `[connectPeripheral][${peripheral.id}] failed to retrieve descriptor ${descriptor} for characteristic ${characteristic}:`,
-                    error,
-                  );
-                }
-              }
-            }
-          }
-        }
-        console.log('peripheral.connected : ', peripheral.connected);
         let p = peripherals.get(peripheral.id);
         if (p) {
           addOrUpdatePeripheral(peripheral.id, {...peripheral, rssi});
         }
+
         setConnectedDeviceId(peripheral.id);
+
+        return () => {};
       }
     } catch (error) {
       console.error(
@@ -391,6 +498,12 @@ const ConnectBleComponentRaw = ({route}) => {
         'BleManagerDiscoverPeripheral',
         handleDiscoverPeripheral,
       ),
+      // bleManagerEmitter.addListener(
+      //   'BleManagerDiscoverPeripheral',
+      //   peripheral => {
+      //     console.log('Discovered peripheral:', peripheral);
+      //   },
+      // ),
       bleManagerEmitter.addListener('BleManagerStopScan', handleStopScan),
       bleManagerEmitter.addListener(
         'BleManagerDisconnectPeripheral',
@@ -472,8 +585,10 @@ const ConnectBleComponentRaw = ({route}) => {
 
   const renderItem = ({item}: {item: Peripheral}) => {
     // if (item.id && item.id.includes(searchDeviceId)) {
-    if (item.name && item.name.includes(targetDeviceName)) {
-      // if (item.id === targetDeviceId) {
+    // if (item.name && item.name.includes(targetDeviceName)) {
+    // if (item.name) {
+    if (item.name?.includes(targetDeviceName)) {
+      // console.log('item : ', item);
       return (
         <TouchableHighlight
           onPress={() => {
@@ -612,29 +727,30 @@ const ConnectBleComponentRaw = ({route}) => {
           </View> */}
           <SafeAreaView style={{...styles.body, marginTop: 20}}>
             <Pressable style={styles.scanButton}>
-              <Text style={styles.scanButtonText}>IR : {ir}</Text>
+              <Text style={styles.scanButtonText}>HR : {hrData}</Text>
             </Pressable>
             <Pressable style={styles.scanButton}>
-              <Text style={styles.scanButtonText}>RED : {red}</Text>
+              <Text style={styles.scanButtonText}>SPO2 : {spo2Data}</Text>
             </Pressable>
             <Pressable style={styles.scanButton}>
-              <Text style={styles.scanButtonText}>TEMP : {temp}</Text>
+              <Text style={styles.scanButtonText}>TEMP : {tempData}</Text>
             </Pressable>
           </SafeAreaView>
           <Pressable
             style={styles.scanButton}
-            onPress={sendObject}
+            // onPress={sendObject}
+            onPress={sendArray}
             android_ripple={{color: 'lightgray'}}>
             <Text style={styles.scanButtonText}>데이터 보내기</Text>
           </Pressable>
-          <Pressable
+          {/* <Pressable
             style={styles.scanButton}
             onPress={() => {
               navigation.navigate('Test');
             }}
             android_ripple={{color: 'lightgray'}}>
             <Text style={styles.scanButtonText}>test server</Text>
-          </Pressable>
+          </Pressable> */}
           {/* <Pressable
           style={styles.scanButton}
           onPress={() => {
