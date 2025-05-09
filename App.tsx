@@ -1,47 +1,39 @@
-import React, {useState, useEffect} from 'react';
-import {StyleSheet} from 'react-native';
-import {NavigationContainer} from '@react-navigation/native';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import React from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import Login from './Component/login';
+import SignUp from './Component/sign';
+import Dashboard from './Component/dashboard';
+import DetailTemp from './Component/detailTemp';
+import DetailHeart from './Component/detailHeart';
 import Intro from './Component/intro';
-import LogInComponent from './Component/logIn';
-import HomeComponent from './Component/home';
-import ShowListComponent from './Component/showListComponent';
-import ConnectBleComponent from './Component/connectBleComponent';
-import ConnectBleComponentRaw from './Component/connectBleComponent_raw';
-import ShowDataComponent from './Component/showDataComponent';
-import MonitorComponent from './Component/monitorComponent';
-import TestComponent from './Component/testComponent';
-import animationBleImage from './Component/animationBleImage';
-import {PetProvider} from './AppContext';
+import RegisterPet from './Component/registerPet';
+import PetLists from './Component/petLists';
+
 const Stack = createNativeStackNavigator();
 
-const App: React.FC = () => {
+const App = () => {
   return (
-    <>
-      <PetProvider>
-        <NavigationContainer>
-          <Stack.Navigator
-            screenOptions={{
-              headerShown: false,
-              contentStyle: {backgroundColor: '#121212'},
-            }}
-            initialRouteName="ConnectBle">
-            <Stack.Screen name="Intro" component={Intro} />
-            <Stack.Screen name="Login" component={LogInComponent} />
-            <Stack.Screen name="Home" component={HomeComponent} />
-            <Stack.Screen name="ShowList" component={ShowListComponent} />
-            {/* <Stack.Screen name="ConnectBle" component={ConnectBleComponent} /> */}
-            <Stack.Screen
-              name="ConnectBle"
-              component={ConnectBleComponentRaw}
-            />
-            <Stack.Screen name="ShowData" component={ShowDataComponent} />
-            <Stack.Screen name="Monitor" component={MonitorComponent} />
-            <Stack.Screen name="Test" component={TestComponent} />
-          </Stack.Navigator>
-        </NavigationContainer>
-      </PetProvider>
-    </>
+    <NavigationContainer>
+      <Stack.Navigator
+        initialRouteName="Intro"
+        screenOptions={{
+          headerShown: false,
+          contentStyle: {
+            backgroundColor: '#FFFFFF'
+          }
+        }}
+      >
+        <Stack.Screen name="Intro" component={Intro} />
+        <Stack.Screen name="Login" component={Login} />
+        <Stack.Screen name="SignUp" component={SignUp} />
+        <Stack.Screen name="Dashboard" component={Dashboard} />
+        <Stack.Screen name="DetailTemp" component={DetailTemp} />
+        <Stack.Screen name="DetailHeart" component={DetailHeart} />
+        <Stack.Screen name="RegisterPet" component={RegisterPet} />
+        <Stack.Screen name="PetLists" component={PetLists} />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 };
 

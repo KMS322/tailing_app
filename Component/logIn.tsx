@@ -1,225 +1,213 @@
-import React, {useState, useRef} from 'react';
+import React, { useState } from 'react';
 import {
-  View,
+  SafeAreaView,
   StyleSheet,
-  Image,
-  Dimensions,
   Text,
+  View,
   TextInput,
   TouchableOpacity,
-  Modal,
+  Alert,
   KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
-import {useNavigation} from '@react-navigation/native';
-// const windowWidth = Dimensions.get('window').width;
-const LogInComponent = () => {
-  const navigation = useNavigation();
-  const usernameRef = useRef(null);
-  const [userID, setUserID] = useState('');
-  const [userPW, setUserPW] = useState('');
-  const [modalVisible, setModalVisible] = useState(false);
-  return (
-    <>
-      <View style={styles.login_container}>
-        <View style={styles.logo_box}>
-          <Image
-            source={require('../assets/images/logo.png')}
-            style={styles.logo_image}
-          />
-        </View>
-        <Text style={styles.title}>Login</Text>
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-        <View style={styles.input_container}>
-          <Image
-            source={require('../assets/images/login_icon1.png')}
-            style={styles.input_image}
-          />
-          <TextInput
-            style={styles.input_text}
-            onChangeText={text => setUserID(text)}
-            value={userID}
-            placeholder="ID"
-            placeholderTextColor="#1EA3D6"
-            ref={usernameRef}
-          />
+type RootStackParamList = {
+  Login: undefined;
+  SignUp: undefined;
+  Dashboard: undefined;
+  RegisterPet: undefined;
+  PetLists: undefined;
+};
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
+type FormData = {
+  id: string;
+  password: string;
+};
+
+type FormErrors = {
+  [key in keyof FormData]?: string;
+};
+
+const Login = ({ navigation }: { navigation: NavigationProp }) => {
+  const [formData, setFormData] = useState<FormData>({
+    id: '',
+    password: '',
+  });
+
+  const [errors, setErrors] = useState<FormErrors>({});
+
+  // 유효성 검사
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = {};
+
+    if (!formData.id) {
+      newErrors.id = '아이디를 입력해주세요.';
+    }
+
+    if (!formData.password) {
+      newErrors.password = '비밀번호를 입력해주세요.';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // 로그인 제출
+  const handleSubmit = async () => {
+    if (!validateForm()) {
+      return;
+    }
+
+    // 임시로 바로 PetLists로 이동
+    navigation.navigate('PetLists');
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardAvoidingView}
+      >
+        <View style={styles.content}>
+          <View style={styles.header}>
+            <Text style={styles.title}>Tailing</Text>
+            <Text style={styles.subtitle}>반려견과의 새로운 소통</Text>
+          </View>
+
+          <View style={styles.form}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>아이디</Text>
+              <TextInput
+                style={styles.input}
+                value={formData.id}
+                onChangeText={(text) => {
+                  setFormData(prev => ({ ...prev, id: text }));
+                  setErrors(prev => ({ ...prev, id: undefined }));
+                }}
+                placeholder="아이디를 입력하세요"
+                placeholderTextColor="#999999"
+              />
+              {errors.id && (
+                <Text style={styles.errorText}>{errors.id}</Text>
+              )}
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>비밀번호</Text>
+              <TextInput
+                style={styles.input}
+                value={formData.password}
+                onChangeText={(text) => {
+                  setFormData(prev => ({ ...prev, password: text }));
+                  setErrors(prev => ({ ...prev, password: undefined }));
+                }}
+                placeholder="비밀번호를 입력하세요"
+                placeholderTextColor="#999999"
+                secureTextEntry
+              />
+              {errors.password && (
+                <Text style={styles.errorText}>{errors.password}</Text>
+              )}
+            </View>
+
+            <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+              <Text style={styles.submitButtonText}>로그인</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.signUpButton}
+              onPress={() => navigation.navigate('SignUp')}
+            >
+              <Text style={styles.signUpButtonText}>회원가입</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-        <View
-          style={{
-            ...styles.input_container,
-            marginTop: 30,
-          }}>
-          <Image
-            source={require('../assets/images/login_icon2.png')}
-            style={styles.input_image}
-          />
-          <TextInput
-            style={styles.input_text}
-            onChangeText={text => setUserPW(text)}
-            value={userPW}
-            placeholder="PASSWORD"
-            placeholderTextColor="#1EA3D6"
-            ref={usernameRef}
-            secureTextEntry={true}
-          />
-        </View>
-        <Text style={styles.text}>Forgot password?</Text>
-        <View style={styles.btn_container}>
-          <TouchableOpacity
-            style={styles.btn}
-            onPress={() => {
-              navigation.navigate('Home', {data: userID});
-            }}>
-            <Text style={styles.btn_text}>Log In</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={{...styles.btn, backgroundColor: '#121212'}}
-            onPress={() => {}}>
-            <Text
-              style={{
-                ...styles.btn_text,
-                color: '#1EA3D6',
-              }}>
-              Sign Up
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-      {/* <Modal visible={modalVisible} transparent={true}>
-        <View style={styles.modal_container}>
-          <Text style={styles.modal_text}>
-            아이디 또는 비밀번호를 확인해주세요.
-          </Text>
-          <TouchableOpacity
-            style={styles.modal_btn}
-            onPress={() => {
-              setUsername('');
-              setPassword('');
-              setModalVisible(false);
-            }}>
-            <Text style={styles.modal_btn_text}>확인</Text>
-          </TouchableOpacity>
-        </View>
-      </Modal> */}
-    </>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  keyboard: {
+  container: {
     flex: 1,
-    // position: 'absolute',
-    // bottom: 0,
-    justifyContent: 'flex-end',
+    backgroundColor: '#FFFFFF',
   },
-  login_container: {
-    height: 'auto',
+  keyboardAvoidingView: {
     flex: 1,
-    alignItems: 'flex-start',
-    // position: 'relative',
   },
-  logo_box: {
-    width: '100%',
-    height: 55,
-    display: 'flex',
+  content: {
+    flex: 1,
+    padding: 24,
+  },
+  header: {
     alignItems: 'center',
-    marginTop: 50,
-  },
-  logo_image: {
-    width: 100,
-    height: 55,
+    marginTop: 60,
+    marginBottom: 40,
   },
   title: {
-    textAlign: 'left',
-    fontSize: 32,
-    fontWeight: '800',
-    fontFamily: 'inter',
-    marginTop: 80,
-    marginBottom: 80,
-    marginLeft: 40,
-    color: '#1EA3D6',
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: '#F0663F',
+    marginBottom: 8,
   },
-  input_container: {
-    width: '100%',
-    height: 40,
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    borderColor: '#B2B2B2',
+  subtitle: {
+    fontSize: 18,
+    color: '#F5B75C',
   },
-  input_image: {
-    width: 18,
-    height: 18,
-    marginLeft: 40,
+  form: {
+    flex: 1,
   },
-  input_text: {
-    fontSize: 14,
-    color: '#1EA3D6',
-    fontWeight: '500',
-    marginLeft: 15,
+  inputGroup: {
+    marginBottom: 20,
   },
-  text: {
-    fontSize: 13,
-    color: '#B1B0AF',
-    fontWeight: '500',
-    alignSelf: 'center',
-    marginTop: 20,
-  },
-  btn_container: {
-    width: '100%',
-    height: 180,
-    position: 'absolute',
-    bottom: 0,
-  },
-  btn: {
-    fontSize: 20,
-    height: '50%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#1EA3D6',
+  label: {
+    fontSize: 16,
     fontWeight: '600',
-    color: '#292724',
+    marginBottom: 8,
+    color: '#F5B75C',
   },
-  btn_text: {
-    fontSize: 20,
+  input: {
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    backgroundColor: '#FFFFFF',
+    color: '#333333',
+  },
+  errorText: {
+    color: '#FF3B30',
+    fontSize: 12,
+    marginTop: 4,
+  },
+  submitButton: {
+    backgroundColor: '#F0663F',
+    padding: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 24,
+  },
+  submitButtonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
     fontWeight: '600',
-    color: '#292724',
   },
-  // modal_container: {
-  //   width: 293,
-  //   height: 135,
-  //   shadowColor: '#000000',
-  //   shadowOffset: {width: 2, height: 3},
-  //   shadowOpacity: 0.8,
-  //   shadowRadius: 8,
-  //   backgroundColor: 'white',
-  //   borderRadius: 10,
-  //   position: 'absolute',
-  //   left: (Dimensions.get('window').width - 293) / 2,
-  //   top: (Dimensions.get('window').height - 135) / 2,
-  //   alignItems: 'center',
-  // },
-  // modal_text: {
-  //   fontSize: 15,
-  //   fontWeight: '500',
-  //   color: '#717171',
-  //   marginTop: 50,
-  // },
-  // modal_btn: {
-  //   width: 63,
-  //   height: 24,
-  //   borderRadius: 6,
-  //   alignItems: 'center',
-  //   justifyContent: 'center',
-  //   backgroundColor: '#12B6D1',
-  //   marginTop: 20,
-  // },
-  // modal_btn_text: {
-  //   fontSize: 13,
-  //   fontWeight: 'bold',
-  //   color: 'white',
-  // },
+  signUpButton: {
+    padding: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: '#F0663F',
+  },
+  signUpButtonText: {
+    color: '#F0663F',
+    fontSize: 18,
+    fontWeight: '600',
+  },
 });
 
-export default LogInComponent;
+export default Login; 

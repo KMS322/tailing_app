@@ -1,10 +1,8 @@
-package com.example;
+package com.tailing_app;
 
 import com.facebook.react.ReactActivity;
 import com.facebook.react.ReactActivityDelegate;
-import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint;
 import com.facebook.react.defaults.DefaultReactActivityDelegate;
-import android.os.Bundle;
 
 public class MainActivity extends ReactActivity {
 
@@ -13,13 +11,8 @@ public class MainActivity extends ReactActivity {
    * rendering of the component.
    */
   @Override
-  protected void onCreate(Bundle savedInstanceState) {
-    super.onCreate(null);
-  }
-
-  @Override
   protected String getMainComponentName() {
-    return "example";
+    return "tailing_app";
   }
 
   /**
@@ -33,9 +26,8 @@ public class MainActivity extends ReactActivity {
         this,
         getMainComponentName(),
         // If you opted-in for the New Architecture, we enable the Fabric Renderer.
-        DefaultNewArchitectureEntryPoint.getFabricEnabled(), // fabricEnabled
+        false,
         // If you opted-in for the New Architecture, we enable Concurrent React (i.e. React 18).
-        DefaultNewArchitectureEntryPoint.getConcurrentReactEnabled() // concurrentRootEnabled
-        );
+        false);
   }
 }

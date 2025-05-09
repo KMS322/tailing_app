@@ -20,19 +20,45 @@ import {
   Alert,
 } from 'react-native';
 import axios from 'axios';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
+import {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import {Buffer} from 'buffer';
+import dayjs from 'dayjs';
+import Header from "./header"
+
+type RootStackParamList = {
+  Dashboard: {
+    selectedPet: {
+      name: string;
+      gender: string;
+      birthDate: string;
+      breed: string;
+      isNeutered: boolean;
+      diseases: string;
+    };
+  };
+  DetailHeart: {
+    hrData: number;
+  };
+  DetailTemp: {
+    tempData: number;
+  };
+};
+
+type DashboardScreenRouteProp = RouteProp<RootStackParamList, 'Dashboard'>;
+type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Dashboard'>;
+
 const SECONDS_TO_SCAN_FOR = 7;
 const SERVICE_UUIDS: string[] = [];
 const windowWidth = Dimensions.get('window').width;
 const SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
+// const CHARACTERISTIC_UUID_RX = '6e400002-b5a3-f393-e0A9-e50e24dcca9e';
+const characteristicUUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
 const CHARACTERISTIC_UUID_RX = '6e400002-b5a3-f393-e0A9-e50e24dcca9e';
+// const CHARACTERISTIC_UUID_RX = '2A37';
 const CHARACTERISTIC_UUID_TX = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
 
-// const targetDeviceId = 'A0:76:4E:E7:FC:6E';
-// const targetDeviceId = 'A0:76:4E:E7:42:02';
-const searchDeviceId = 'A0:76:4E';
-const targetDeviceId = 'A0:76:4E:E2:7C:EE';
-const targetDeviceName = 'ESP32_231001';
+const targetDeviceName = 'Zephy';
 const ALLOW_DUPLICATES = true;
 const convertToAscii = (numbers: number[]): string => {
   const asciiChars: string[] = numbers.map(number =>
@@ -86,8 +112,11 @@ declare module 'react-native-ble-manager' {
   }
 }
 
-const ConnectBleComponent = ({route}) => {
-  const navigation = useNavigation();
+const Dashboard = () => {
+  const navigation = useNavigation<NavigationProp>();
+  const route = useRoute<DashboardScreenRouteProp>();
+  const {selectedPet} = route.params;
+  console.log('Selected Pet:', selectedPet);
   const [isScanning, setIsScanning] = useState(false);
   const [peripherals, setPeripherals] = useState(
     new Map<Peripheral['id'], Peripheral>(),
@@ -100,6 +129,16 @@ const ConnectBleComponent = ({route}) => {
   const [PPG, setPPG] = useState(0);
   const [cnt, setCnt] = useState(0);
   const [pulse, setPulse] = useState(0);
+
+  const [ir, setIr] = useState(0);
+  const [red, setRed] = useState(0);
+  const [temp, setTemp] = useState(0);
+
+  const [irData, setIrData] = useState(0);
+  const [redData, setRedData] = useState(0);
+  const [hrData, setHrData] = useState(0);
+  const [spo2Data, setSpo2Data] = useState(0);
+  const [tempData, setTempData] = useState(0);
 
   // <HomeComponent bleData={rawDatas} />;
 
@@ -118,7 +157,8 @@ const ConnectBleComponent = ({route}) => {
       try {
         console.debug('[startScan] starting scan...');
         setIsScanning(true);
-        BleManager.scan(SERVICE_UUIDS, SECONDS_TO_SCAN_FOR, ALLOW_DUPLICATES, {
+        // BleManager.scan(SERVICE_UUIDS, SECONDS_TO_SCAN_FOR, ALLOW_DUPLICATES, {
+        BleManager.scan([], SECONDS_TO_SCAN_FOR, ALLOW_DUPLICATES, {
           matchMode: BleScanMatchMode.Sticky,
           scanMode: BleScanMode.LowLatency,
           callbackType: BleScanCallbackType.AllMatches,
@@ -173,40 +213,157 @@ const ConnectBleComponent = ({route}) => {
   };
   const checkCurrentTime = () => {
     const formattedTime = formatDateTime(new Date());
-    // console.log(`Current Time in Korea: ${formattedTime}`);
     return formattedTime;
   };
   const [dataStorage, setDataStorage] = useState<
-    {time: string; ppg: number; pulse: number; factor: number}[]
+    {time: string; ir: number; red: number}[]
   >([]);
+
+  const [sendDatas, setSendDatas] = useState([]);
+  const parseData = (
+    input: string,
+  ): {
+    time: string | null;
+    red: number | null;
+    ir: number | null;
+    SpO2: number | null;
+    HR: number | null;
+    TEMP: number | null;
+  } => {
+    // 초기 객체 생성, TEMP 필드를 null로 설정
+    let data = {
+      time: null as string | null,
+      red: null as number | null,
+      ir: null as number | null,
+      SpO2: null as number | null,
+      HR: null as number | null,
+      TEMP: null as number | null,
+    };
+
+    // 문자열에서 'TEMP'가 있는지 확인
+    const hasTemp = input.includes('TEMP');
+
+    // 정규 표현식으로 숫자 값 추출
+    const regex =
+      /time\s*:\s*(\d+),\s*red\s*:\s*(\d+),\s*ir\s*:\s*(\d+),\s*SpO2\s*:\s*(-?\d+),\s*HR\s*:\s*(\d+)(?:,\s*TEMP\s*:\s*([\d.]+))?/;
+    const match = input.match(regex);
+
+    if (match) {
+      // data.time = parseInt(match[1]);
+      data.time = dayjs().format('MMDD-HH:mm:ss');
+      data.red = parseInt(match[2]);
+      data.ir = parseInt(match[3]);
+      data.SpO2 = parseInt(match[4]);
+      data.HR = parseInt(match[5]);
+      // console.log('data.time : ', data.time);
+      // console.log('data.red : ', data.red);
+      // console.log('data.ir : ', data.ir);
+      // console.log('data.SpO2 : ', data.SpO2);
+      // console.log('data.HR : ', data.HR);
+      setIrData(data.ir);
+      setRedData(data.red);
+      setHrData(data.HR);
+      setSpo2Data(data.SpO2);
+      // TEMP가 있으면 TEMP 필드에 값을 설정, 없으면 null 유지
+      if (hasTemp) {
+        data.TEMP = parseFloat(match[6]);
+        setTempData(data.TEMP);
+      }
+
+      setSendDatas(prevData => [
+        ...prevData,
+        {
+          red: data.red,
+          ir: data.ir,
+          SpO2: data.SpO2,
+          HR: data.HR,
+          TEMP: data.TEMP,
+          time: data.time,
+        },
+      ]);
+    }
+
+    return data;
+  };
+
+  const sendArray = async () => {
+    try {
+      // const apiUrl = 'http://10.0.2.2:3000/receive/arrs';
+
+      const apiUrl = 'http://211.188.52.135:3000/receive/arrs';
+
+      // const apiUrl = 'http://211.36.133.139:3000/receive/arrs';
+
+      // const apiUrl = 'http://localhost:3000/receive/arrs';
+      // const apiUrl = 'http://27.96.128.206:3000/receive/arrs';
+      // const apiUrl = 'http://localhost:3000/receive/arrs';
+      // console.log('sended dataLists : ', dataLists);
+      const response = await axios.post(apiUrl, sendDatas);
+      if (response.status === 200) {
+        Alert.alert('Success Message', 'send datas');
+        setSendDatas([]);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
   const handleUpdateValueForCharacteristic = (
     data: BleManagerDidUpdateValueForCharacteristicEvent,
   ) => {
-    const asciiResult: string = convertToAscii(data.value);
-    const numbersAsStrings = asciiResult.split(',');
-    const num1: number = parseInt(numbersAsStrings[0]);
-    const num2: number = parseInt(numbersAsStrings[1]);
-    let truncatedNum1: number = Math.floor(num1 / 100); // ppg
-    let truncatedNum2: number = Math.round((num2 / 100) * 20);
-    let num3: number = parseInt(numbersAsStrings[2]);
-    setPPG(truncatedNum1);
-    setFactor(num3);
-    setPulse(truncatedNum2);
-    setDataStorage(prevData => [
-      ...prevData,
-      {
-        time: checkCurrentTime().toLocaleString(),
-        ppg: truncatedNum1,
-        pulse: truncatedNum2,
-        factor: num3,
-      },
-    ]);
+    const {value} = data;
+
+    // Base64로 인코딩된 값을 디코딩
+    const decodedValue = Buffer.from(value, 'base64').toString('utf-8');
+
+    // console.log('value : ', decodedValue);
+    const parsedData = parseData(decodedValue);
+    console.log('Parsed Data: ', parsedData);
+
+    // console.log('AAAA');
+    // const {value, characteristic} = data;
+    // console.log('value : ', value);
+    // console.log('characteristic : ', characteristic);
+
+    // const decodedData = Buffer.from(value, 'base64').toString();
+
+    // console.log(`Received data from characteristic ${characteristic}:`, decodedData);
+    // console.log('수신된 원시 데이터 : ', value);
+    // const asciiResult: string = convertToAscii2(data.value);
+    // console.log('asciiResult : ', asciiResult); // 변환된 ASCII 데이터 로그
+    // const parsedData = parseData(asciiResult);
+    // console.log('파싱된 데이터:', parsedData);
+    // console.log('data.value : ', data.value);
+    // const asciiResult: string = convertToAscii(data.value);
+    // console.log('asciiResult : ', asciiResult);
+    // const parts = asciiResult.split(', ');
+    // const irValue = parts[0].split(': ')[1];
+    // const redValue = parts[1].split(': ')[1];
+    // const tempValue = parts[2] && parts[2].split(': ')[1];
+    // const irNumber = parseInt(irValue);
+    // const redNumber = parseInt(redValue);
+    // const tempNumber = parseInt(tempValue);
+
+    // console.log('irNumber : ', irNumber);
+    // console.log('redNumber : ', redNumber);
+    // console.log('tempNumber : ', tempNumber);
+    // setIr(irNumber);
+    // setRed(redNumber);
+    // setTemp(tempNumber);
+    // setDataStorage(prevData => [
+    //   ...prevData,
+    //   {
+    //     time: checkCurrentTime().toLocaleString(),
+    //     ir: irNumber,
+    //     red: redNumber,
+    //     temp: tempNumber,
+    //   },
+    // ]);
   };
   const sendObject = async () => {
     // const apiUrl = 'http://10.0.2.2:8001/object';
     // const apiUrl = 'http://localhost:8001/object';
     // const apiUrl = 'http://27.96.128.206:8001/object';
-    const apiUrl = 'http://115.85.183.166:8001/object';
+    const apiUrl = 'http://115.85.183.166:8001/objectRaw';
     try {
       const response = await axios.post(apiUrl, dataStorage);
       console.log('Data sent successfully');
@@ -233,8 +390,15 @@ const ConnectBleComponent = ({route}) => {
   };
 
   const handleDiscoverPeripheral = (peripheral: Peripheral) => {
-    if (peripheral.name === targetDeviceName) {
-      addOrUpdatePeripheral(peripheral.id, peripheral);
+    // if (peripheral.name === targetDeviceName) {
+    //   addOrUpdatePeripheral(peripheral.id, peripheral);
+    // }
+    if (
+      peripheral.name === 'Zephy45' ||
+      peripheral.advertising.localName === 'Zephy45'
+    ) {
+      // console.log('Zephy45 발견:', peripheral);
+      addOrUpdatePeripheral(peripheral.id, peripheral); // Zephy45만 추가
     }
   };
 
@@ -258,12 +422,14 @@ const ConnectBleComponent = ({route}) => {
   const connectPeripheral = async (peripheral: Peripheral) => {
     try {
       if (peripheral) {
+        // console.log('peripheral : ', peripheral);
         console.log('연결된 device의 peripheral.id : ', peripheral.id);
-        console.log(
-          '연결된 device의 peripheral.id의 타입 : ',
-          typeof peripheral.id,
-        );
+        // console.log(
+        //   '연결된 device의 peripheral.id의 타입 : ',
+        //   typeof peripheral.id,
+        // );
         addOrUpdatePeripheral(peripheral.id, {...peripheral, connecting: true});
+
         await BleManager.connect(peripheral.id);
         console.debug(`[connectPeripheral][${peripheral.id}] connected.`);
 
@@ -272,69 +438,60 @@ const ConnectBleComponent = ({route}) => {
           connecting: false,
           connected: true,
         });
+
         await BleManager.checkState().then(state =>
           console.log(`current BLE state = '${state}'.`),
         );
-        console.debug(`[connectPeripheral][${peripheral.id}] connected.`);
-        await BleManager.startNotification(
-          peripheral.id,
-          '6e400001-b5a3-f393-e0a9-e50e24dcca9e',
-          '6e400003-b5a3-f393-e0a9-e50e24dcca9e',
-        )
-          .then(() => {
-            // Success code
-            console.log('Notification started');
-          })
-          .catch(error => {
-            // Failure code
-            console.log('에러는 : ', error);
-          });
 
-        await sleep(900);
-
-        /* Test read current RSSI value, retrieve services first */
+        // 서비스 및 characteristic 가져오기
         const peripheralData = await BleManager.retrieveServices(peripheral.id);
         console.debug(
           `[connectPeripheral][${peripheral.id}] retrieved peripheral services`,
           peripheralData,
         );
 
+        const characteristics = peripheralData.characteristics;
+        characteristics?.forEach(async characteristic => {
+          const {characteristic: char, properties} = characteristic;
+          console.log(`Characteristic ${char} properties:`, properties);
+        });
+        await BleManager.checkState().then(state =>
+          console.log(`current BLE state = '${state}'.`),
+        );
+        const sUUID = 'a3c87500-8ed3-4bdf-8a39-a01bebede295';
+        const cUUID = 'a3c87502-8ed3-4bdf-8a39-a01bebede295';
+        await BleManager.startNotification(
+          peripheral.id,
+          sUUID,
+          cUUID,
+          // '6e400001-b5a3-f393-e0a9-e50e24dcca9e',
+          // '6e400003-b5a3-f393-e0a9-e50e24dcca9e',
+          // '0x2A38',
+          // '0x2A38',
+        )
+          .then(() => {
+            // Success code
+            console.log('Notification started on characteristic:', cUUID);
+          })
+          .catch(error => {
+            // Failure code
+            console.log('1111에러는 : ', error);
+          });
+
+        // RSSI 읽기
         const rssi = await BleManager.readRSSI(peripheral.id);
         console.debug(
           `[connectPeripheral][${peripheral.id}] retrieved current RSSI value: ${rssi}.`,
         );
 
-        if (peripheralData.characteristics) {
-          for (let characteristic of peripheralData.characteristics) {
-            if (characteristic.descriptors) {
-              for (let descriptor of characteristic.descriptors) {
-                try {
-                  let data = await BleManager.readDescriptor(
-                    peripheral.id,
-                    characteristic.service,
-                    characteristic.characteristic,
-                    descriptor.uuid,
-                  );
-                  console.debug(
-                    `[connectPeripheral][${peripheral.id}] descriptor read as:`,
-                    data,
-                  );
-                } catch (error) {
-                  console.error(
-                    `[connectPeripheral][${peripheral.id}] failed to retrieve descriptor ${descriptor} for characteristic ${characteristic}:`,
-                    error,
-                  );
-                }
-              }
-            }
-          }
-        }
-        console.log('peripheral.connected : ', peripheral.connected);
         let p = peripherals.get(peripheral.id);
         if (p) {
           addOrUpdatePeripheral(peripheral.id, {...peripheral, rssi});
         }
+
         setConnectedDeviceId(peripheral.id);
+
+        return () => {};
       }
     } catch (error) {
       console.error(
@@ -368,6 +525,12 @@ const ConnectBleComponent = ({route}) => {
         'BleManagerDiscoverPeripheral',
         handleDiscoverPeripheral,
       ),
+      // bleManagerEmitter.addListener(
+      //   'BleManagerDiscoverPeripheral',
+      //   peripheral => {
+      //     console.log('Discovered peripheral:', peripheral);
+      //   },
+      // ),
       bleManagerEmitter.addListener('BleManagerStopScan', handleStopScan),
       bleManagerEmitter.addListener(
         'BleManagerDisconnectPeripheral',
@@ -448,8 +611,11 @@ const ConnectBleComponent = ({route}) => {
   };
 
   const renderItem = ({item}: {item: Peripheral}) => {
-    if (item.id && item.id.includes(searchDeviceId)) {
-      // if (item.id === targetDeviceId) {
+    // if (item.id && item.id.includes(searchDeviceId)) {
+    // if (item.name && item.name.includes(targetDeviceName)) {
+    // if (item.name) {
+    if (item.name?.includes(targetDeviceName)) {
+      // console.log('item : ', item);
       return (
         <TouchableHighlight
           onPress={() => {
@@ -470,7 +636,7 @@ const ConnectBleComponent = ({route}) => {
             <Text style={styles.peripheralName}>{item.id}</Text>
             <Image
               source={
-                PPG === ''
+                ir === ''
                   ? require('../assets/images/connecting_img1.png')
                   : require('../assets/images/connecting_img2.png')
               }
@@ -526,104 +692,69 @@ const ConnectBleComponent = ({route}) => {
 
   return (
     <>
-      <View style={styles.container}>
-        {/* <Text style={styles.title}>{data.title}</Text> */}
-        {/* <View style={styles.img_box}>
-          <TouchableOpacity style={styles.ble_touch} onPress={startScan}>
-            {isScanning ? (
-              <Image
-                source={require('../assets/images/bleConnect_img.png')}
-                style={styles.ble_img}
-              />
-            ) : (
-              <Image
-                source={require('../assets/images/bleStart_img.png')}
-                style={styles.ble_img}
-              />
-            )}
-          </TouchableOpacity>
-
-          <Text style={styles.ble_text}>
-            Turn on the Bluetooth connection{'\n'}of the device.
-          </Text>
-        </View> */}
-        {/* <Text style={{...styles.title, marginTop: 20}}>Device list</Text> */}
-        <View style={styles.list_box}>
-          <FlatList
-            data={Array.from(peripherals.values())}
-            contentContainerStyle={{rowGap: 12}}
-            renderItem={renderItem}
-            keyExtractor={item => item.id}
-          />
-        </View>
-
-        <SafeAreaView style={styles.body}>
-          <Pressable
-            style={styles.scanButton}
-            onPress={startScan}
-            android_ripple={{color: 'lightgray'}}>
-            <Text style={styles.scanButtonText}>
-              {isScanning ? '탐색중...' : '주변 기기 탐색'}
-            </Text>
-          </Pressable>
-          <View style={styles.input_box}>
-            <TextInput
-              placeholder="Factor(숫자)를 입력하세요"
-              placeholderTextColor={'white'}
-              onChangeText={text => setInputValue(text)}
-              value={inputValue}
-              keyboardType="numeric"
-              style={{...styles.inputText, color: 'white'}}
-            />
-            <Pressable
-              style={{...styles.scanButton, width: '25%'}}
-              // onPress={handleSendData}
-              onPress={() => {
-                sendData(inputValue, connectedDeviceId);
-                setInputValue('');
-              }}
-              android_ripple={{color: 'lightgray'}}>
-              <Text style={styles.scanButtonText}>전송</Text>
-            </Pressable>
-          </View>
-          <SafeAreaView style={{...styles.body, marginTop: 20}}>
-            <Pressable style={styles.scanButton}>
-              <Text style={styles.scanButtonText}>factor : {factor}</Text>
-            </Pressable>
-            <Pressable style={styles.scanButton}>
-              <Text style={styles.scanButtonText}>ppg : {PPG}</Text>
-            </Pressable>
-            <Pressable style={styles.scanButton}>
-              <Text style={styles.scanButtonText}>pulse: {pulse}</Text>
+    <Header title="디바이스 모니터링" />
+      <SafeAreaView style={styles.container}>
+        <SafeAreaView style={styles.info_container}>
+          <Text style={styles.info_name}>{selectedPet.name}</Text>
+          <SafeAreaView style={styles.info_box}>
+            <Image source={require("../assets/images/gender_female.png")} style={styles.icon_gender}/>
+            <Text style={styles.info_age}>{selectedPet.birthDate}</Text>
+            <Text style={styles.info_age}>|</Text>
+            <Text style={styles.info_age}>{selectedPet.breed}</Text>
+          </SafeAreaView>
+        </SafeAreaView>
+        <SafeAreaView style={styles.ble_box}>
+          <Text style={styles.ble_status}>디바이스 미연결됨</Text>
+          <Image source={require("../assets/images/ble_off.png")} style={styles.ble_icon}/>
+        </SafeAreaView>
+        <SafeAreaView style={styles.article_container}>
+          <SafeAreaView style={styles.basic_info}>
+            <Image source={require("../assets/images/icon_basic.png")} style={styles.basic_icon}/>
+            <Text style={styles.basic_text}>기본정보</Text>
+          </SafeAreaView>
+          <SafeAreaView style={styles.article_box}>
+            <SafeAreaView style={styles.icon_box}>
+              <Image source={require("../assets/images/icon_hr.png")} style={styles.icon_img}/>
+              <Text style={styles.icon_text}>심박수</Text>
+            </SafeAreaView>
+            <SafeAreaView style={styles.value_box}>
+              <Text style={styles.value}>{hrData}</Text>
+              <Text style={styles.unit}>BPM</Text>
+            </SafeAreaView>
+            <Pressable onPress={() => navigation.navigate('DetailHeart', { hrData })}>
+              <Text style={styles.detail}>더 보기 {">"}</Text>
             </Pressable>
           </SafeAreaView>
-          <Pressable
-            style={styles.scanButton}
-            onPress={sendObject}
-            android_ripple={{color: 'lightgray'}}>
-            <Text style={styles.scanButtonText}>데이터 보내기</Text>
-          </Pressable>
-          <Pressable
-            style={styles.scanButton}
-            onPress={() => {
-              navigation.navigate('Test');
-            }}
-            android_ripple={{color: 'lightgray'}}>
-            <Text style={styles.scanButtonText}>test server</Text>
-          </Pressable>
-          {/* <Pressable
-          style={styles.scanButton}
-          onPress={() => {
-            setRawDatas('');
-            console.log(rawDatas);
-          }}
-          android_ripple={{color: 'lightgray'}}>
-          <Text style={styles.scanButtonText}>
-            <Text style={styles.scanButtonText}>초기화</Text>
-          </Text>
-        </Pressable> */}
+          <SafeAreaView style={styles.box_line}/>
+          <SafeAreaView style={styles.article_box}>
+            <SafeAreaView style={styles.icon_box}>
+              <Image source={require("../assets/images/icon_spo2.png")} style={styles.icon_img}/>
+              <Text style={styles.icon_text}>산소포화도</Text>
+            </SafeAreaView>
+            <SafeAreaView style={styles.value_box}>
+              <Text style={styles.value}>{spo2Data}</Text>
+              <Text style={styles.unit}>%</Text>
+            </SafeAreaView>
+            <Pressable >
+              <Text style={styles.detail}></Text>
+            </Pressable>
+          </SafeAreaView>
+          <SafeAreaView style={styles.box_line}/>
+          <SafeAreaView style={styles.article_box}>
+            <SafeAreaView style={styles.icon_box}>
+              <Image source={require("../assets/images/icon_temp.png")} style={styles.icon_img}/>
+              <Text style={styles.icon_text}>체온</Text>
+            </SafeAreaView>
+            <SafeAreaView style={styles.value_box}>
+              <Text style={styles.value}>{tempData}</Text>
+              <Text style={styles.unit}>°C</Text>
+            </SafeAreaView>
+            <Pressable onPress={() => navigation.navigate('DetailTemp', { tempData })}>
+            <Text style={styles.detail}>더 보기 {">"}</Text>
+            </Pressable>
+          </SafeAreaView>
         </SafeAreaView>
-      </View>
+      </SafeAreaView>
     </>
   );
 };
@@ -633,9 +764,155 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 'auto',
     display: 'flex',
-    padding: 0,
+    padding: 24,
+    alignItems: 'center',
+    backgroundColor: "#ffffff",
+  },
+  info_container: {
+    width: '100%',
+    height: 'auto',
+    display: 'flex',
+    justifyContent: 'space-between',
+  },
+  info_name: {
+    fontSize: 32,
+    fontWeight: '400',
+    color: '#262626',
+  },
+  info_box: {
+    width: '100%',
+    height: 26,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  icon_gender: {
+    width: 24,
+    height: 24,
+    marginRight: 8,
+  },
+  info_age: {
+    fontSize: 16,
+    fontWeight: '400',
+    color: '#7b7b7b',
+    marginRight: 8,
+  },
+  ble_box: {
+    width: '100%',
+    height: 28,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 20,
+  },
+  ble_status: {
+    color: '#7b7b7b',
+    fontSize: 12,
+    fontWeight: '400',
+  },
+  ble_icon: {
+    width: 28,
+    height: 28,
+  },
+  article_container: {
+    width: '100%',
+    height: 'auto',
+    borderWidth: 1,
+    borderRadius: 16,
+    borderColor: '#F5B75C',
+    paddingTop: 12,
+    paddingBottom: 12,
+    paddingLeft: 24,
+    paddingRight: 24,
+    marginTop: 12,
+  },
+  basic_info: {
+    width: '100%',
+    height: 'auto',
+    display: 'flex',
+    flexDirection: 'row',
     alignItems: 'center',
   },
+  basic_icon: {
+    width: 24,
+    height: 24,
+    marginRight: 4,
+  },
+  basic_text: {
+    fontSize: 16,
+    fontWeight: '400',
+    color: "#262626"
+  },
+  article_box: {
+    width: '100%',
+    height: 52,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 20,
+    marginBottom: 20,
+    position: 'relative',
+  },
+  icon_box: {
+    width: 105,
+    height: 24,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  icon_img: {
+    width: 24,
+    height: 24,
+    marginRight: 4,
+  },
+  icon_text: {
+    fontSize: 16,
+    fontWeight: '400',
+  },
+  value_box : {
+    width: 90,
+    height: 'auto',
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: [{translateX: -30}, {translateY: -12}],
+  
+  },
+  value: {
+    width: 50,
+    fontSize: 28,
+    fontWeight: '400',
+    color: '#262626',
+    lineHeight: 28,
+    textAlign: 'right',
+    margin: 0,
+  },
+  unit: {
+    width: 30,
+    height: 20,
+    fontSize: 14,
+    fontWeight: '400',
+    color: '#7b7b7b',
+    margin: 0,
+  },
+  detail: {
+    fontSize: 12,
+    fontWeight: '400',
+    color: '#262626',
+    marginLeft: 'auto',
+  },
+  box_line: {
+    width: '100%',
+    height: 1,
+    backgroundColor: '#F5B75C',
+  }, 
   title: {
     width: '100%',
     marginTop: 40,
@@ -769,4 +1046,4 @@ const styles = StyleSheet.create({
     // textAlign: 'center',
   },
 });
-export default ConnectBleComponent;
+export default Dashboard;

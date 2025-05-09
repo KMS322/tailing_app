@@ -27,10 +27,10 @@ const HomeComponent = ({route}) => {
   const navigation = useNavigation();
 
   const carouselImgs = [
-    {
-      id: 1,
-      src: require('../assets/images/banner_img1.jpg'),
-    },
+    // {
+    //   id: 1,
+    //   src: require('../assets/images/banner_img1.jpg'),
+    // },
     // {
     //   id: 2,
     //   src: require('../assets/images/banner_img2.jpg'),
