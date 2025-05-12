@@ -31,6 +31,7 @@ import DetailHeart from './detailHeart';
 import DetailTemp from './detailTemp';
 import DashboardInfo from './dashboardInfo';
 import DashboardChart from './dashboardChart';
+import DashboardData from './dashboardData';
 
 type RootStackParamList = {
   Dashboard: {
@@ -707,53 +708,30 @@ const Dashboard = () => {
     // 여기에 실제 재생/정지 로직 구현
     console.log(isPlaying ? 'Pausing...' : 'Playing...');
   };
-
   return (
     <>
-      {orientation === 'PORTRAIT' && <Header title="디바이스 모니터링" />}
+    {orientation === 'PORTRAIT' && <Header title="디바이스 모니터링" />}
+
+    <ScrollView style={styles.container}>
       <DashboardInfo screen={orientation} pet={selectedPet}/>
       <DashboardChart screen={orientation}/>
-      <SafeAreaView style={styles.container}>
-        <SafeAreaView style={styles.article_container}>
-          <View style={styles.metrics_container}>
-            <View style={styles.metric_box}>
-              <Image source={require("../assets/images/icon_hr.png")} style={styles.icon_img}/>
-              {orientation === 'LANDSCAPE' && <Text style={styles.icon_text}>심박수</Text>}
-              <View style={styles.value_box}>
-                <Text style={styles.value}>{hrData}</Text>
-                <Text style={styles.unit}>BPM</Text>
-              </View>
-            </View>
-            <View style={styles.metric_box}>
-              <Image source={require("../assets/images/icon_spo2.png")} style={styles.icon_img}/>
-              {orientation === 'LANDSCAPE' && <Text style={styles.icon_text}>산소포화도</Text>}
-              <View style={styles.value_box}>
-                <Text style={styles.value}>{spo2Data}</Text>
-                <Text style={styles.unit}>%</Text>
-              </View>
-            </View>
-            <View style={styles.metric_box}>
-              <Image source={require("../assets/images/icon_temp.png")} style={styles.icon_img}/>
-              {orientation === 'LANDSCAPE' && <Text style={styles.icon_text}>체온</Text>}
-              <View style={styles.value_box}>
-                <Text style={styles.value}>{tempData}</Text>
-                <Text style={styles.unit}>°C</Text>
-              </View>
-            </View>
-          </View>
-        </SafeAreaView>
-      </SafeAreaView>
-      {orientation === 'PORTRAIT' && <NavigationBar />}
+      <DashboardData screen={orientation} data={{
+        hrData : hrData,
+        spo2Data : spo2Data,
+        tempData : tempData,  
+      }}/>
+   
+    </ScrollView>
+    {orientation === 'PORTRAIT' && <NavigationBar />}
+ 
     </>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     width: '100%',
-    backgroundColor: "#ffffff",
-    padding: 24,
+    height: 'auto',
   },
   ble_box: {
     width: '100%',
@@ -773,18 +751,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
   },
-  article_container: {
-    width: '100%',
-    height: 'auto',
-    borderWidth: 1,
-    borderRadius: 16,
-    borderColor: '#F5B75C',
-    paddingTop: 12,
-    paddingBottom: 12,
-    paddingLeft: 24,
-    paddingRight: 24,
-    marginTop: 20,
-  },
+
   basic_info: {
     width: '100%',
     height: 'auto',
@@ -820,36 +787,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  icon_img: {
-    width: 24,
-    height: 24,
-    marginRight: 4,
-  },
-  icon_text: {
-    fontSize: 16,
-    fontWeight: '400',
-  },
-  value_box: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    minWidth: 90,
-  },
-  value: {
-    fontSize: 28,
-    fontWeight: '400',
-    color: '#262626',
-    lineHeight: 28,
-    textAlign: 'right',
-    margin: 0,
-  },
-  unit: {
-    fontSize: 14,
-    fontWeight: '400',
-    color: '#7b7b7b',
-    margin: 0,
-    marginLeft: 4,
-  },
+
   detail: {
     fontSize: 12,
     fontWeight: '400',
@@ -983,21 +921,8 @@ const styles = StyleSheet.create({
     height: 300,
     marginVertical: 20,
   },
-  metrics_container: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    marginTop: 20,
-    width: '100%',
-  },
-  metric_box: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    flex: 1,
-    justifyContent: 'space-between',
-  },
+
+
   split_chart_container: {
     flexDirection: 'row',
     width: '100%',

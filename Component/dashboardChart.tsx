@@ -17,14 +17,12 @@ const DashboardChart = ({screen} : {screen: string}) => {
         >
           <Text style={[styles.button_text, selectedView === 'heart' && styles.selected_button_text]}>heart</Text>
         </TouchableOpacity>
-        {/* {screen === 'LANDSCAPE' && (
           <TouchableOpacity 
             style={[styles.view_button, selectedView === 'both' && styles.selected_button]}
             onPress={() => setSelectedView('both')}
           >
             <Text style={[styles.button_text, selectedView === 'both' && styles.selected_button_text]}>both</Text>
           </TouchableOpacity>
-        )} */}
         <TouchableOpacity 
           style={[styles.view_button, selectedView === 'temp' && styles.selected_button]} 
           onPress={() => setSelectedView('temp')}
@@ -96,15 +94,12 @@ const styles = StyleSheet.create({
   portrait_container: {
     width: "100%",
     height: "auto", 
-    borderWidth: 1,
-    borderColor: "red",
   },
   landscape_container : {
     width: "100%",
     height: "auto",
     borderWidth: 1,
-    borderColor: "blue",
-    marginTop: 0,
+    borderColor: "red",
   },
   btn_container: {
     width: 166,
@@ -135,8 +130,6 @@ const styles = StyleSheet.create({
   },
   chart_container: {
     width: '100%',
-    height: 300,
-    marginVertical: 20,
   },
   split_chart_container: {
     flexDirection: 'row',
@@ -146,8 +139,6 @@ const styles = StyleSheet.create({
   half_chart: {
     flex: 1,
     height: '100%',
-    borderWidth: 1,
-    borderColor: 'red',
   },
 });
 
