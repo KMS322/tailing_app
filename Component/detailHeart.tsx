@@ -7,7 +7,7 @@ type IRDataPoint = {
   value: number;
 };
 
-const DetailHeart = ({ hrData }: { hrData: number }) => {
+const DetailHeart = ({ hrData, screen }: { hrData: number, screen: string}) => {
   const [data, setData] = useState<IRDataPoint[]>([]);
   const [isAutoScrolling, setIsAutoScrolling] = useState(true);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -15,7 +15,7 @@ const DetailHeart = ({ hrData }: { hrData: number }) => {
   const pointsPerView = 50; // 한 화면에 보여질 데이터 포인트 수를 50개로 변경
   const pointWidth = screenWidth / pointsPerView; // 각 포인트의 너비를 화면 너비에 맞게 계산
   const chartWidth = Math.max(screenWidth, pointsPerView * pointWidth);
-  const chartHeight = 220;
+  const chartHeight = 200;
   const padding = 0; // 좌우 패딩 제거
   const graphHeight = chartHeight - 40; // 상하 여백 유지
 
@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
   },
   chart_container: {
     paddingHorizontal: 0, 
-    paddingVertical: 16, 
+    paddingVertical: 12, 
     backgroundColor: '#ffffff',
     borderRadius: 0,
     marginHorizontal: 0, 
@@ -152,12 +152,12 @@ const styles = StyleSheet.create({
   },
   chart_wrapper: {
     flexDirection: 'row',
-    height: 220,
+    height: 200,
   },
   yAxis: {
     width: 40,
     justifyContent: 'space-between',
-    paddingVertical: 20, // 상하 패딩 유지
+    paddingVertical: 16, 
   },
   yAxisLabel: {
     fontSize: 10,
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
   },
   playButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 12,
     fontWeight: 'bold',
   },
 });

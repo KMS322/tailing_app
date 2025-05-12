@@ -54,9 +54,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 16,
     borderColor: '#F5B75C',
-    paddingTop: 12,
-    paddingBottom: 12,
-    marginTop: 20,
+    paddingTop: 8,
+    paddingBottom: 8,
+    marginTop: 10,
   },
   metrics_container: {
     width: "100%",
@@ -75,8 +75,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   icon_img: {
-    width: 24,
-    height: 24,
+    width: 20,
+    height: 20,
     marginRight: 4,
   },
   icon_text: {
@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   value: {
-    fontSize: 28,
+    fontSize: 20,
     fontWeight: '400',
     color: '#262626',
     lineHeight: 28,
