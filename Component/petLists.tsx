@@ -25,6 +25,7 @@ type RootStackParamList = {
       diseases: string;
     };
   };
+  ConnectBle: undefined;
 };
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -102,20 +103,10 @@ const PetLists = () => {
   };
 
   const handleMonitoringPress = () => {
-    console.log("AA");
     if (selectedPetId) {
       const selectedPet = samplePets.find(pet => pet.id === selectedPetId);
       if (selectedPet) {
-        navigation.navigate('Dashboard', {
-          selectedPet: {
-            name: selectedPet.name,
-            gender: selectedPet.gender,
-            birthDate: selectedPet.birthDate,
-            breed: selectedPet.breed,
-            isNeutered: selectedPet.isNeutered,
-            diseases: selectedPet.diseases
-          }
-        });
+        navigation.navigate('ConnectBle');
       }
     }
   };

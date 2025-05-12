@@ -96,7 +96,7 @@ const SignUp = () => {
     }
 
     if (!formData.address) {
-      newErrors.address = '병원 주소를 입력해주세요.';
+      newErrors.address = '기관 주소를 입력해주세요.';
     }
 
     if (!formData.id) {
@@ -173,7 +173,7 @@ const SignUp = () => {
           <ScrollView style={styles.scrollView}>
             <View style={styles.form}>
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>병원 이름</Text>
+                <Text style={styles.label}>기관 이름</Text>
                 <TextInput
                   style={styles.input}
                   value={formData.hospitalName}
@@ -181,7 +181,7 @@ const SignUp = () => {
                     setFormData(prev => ({ ...prev, hospitalName: text }));
                     setErrors(prev => ({ ...prev, hospitalName: undefined }));
                   }}
-                  placeholder="병원 이름을 입력하세요"
+                  placeholder="기관 이름을 입력하세요"
                 />
                 {errors.hospitalName && (
                   <Text style={styles.errorText}>{errors.hospitalName}</Text>
@@ -189,7 +189,7 @@ const SignUp = () => {
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>병원 주소</Text>
+                <Text style={styles.label}>기관 주소</Text>
                 <TextInput
                   style={styles.input}
                   value={formData.address}
@@ -197,7 +197,7 @@ const SignUp = () => {
                     setFormData(prev => ({ ...prev, address: text }));
                     setErrors(prev => ({ ...prev, address: undefined }));
                   }}
-                  placeholder="병원 주소를 입력하세요"
+                  placeholder="기관 주소를 입력하세요"
                 />
                 {errors.address && (
                   <Text style={styles.errorText}>{errors.address}</Text>

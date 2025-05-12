@@ -67,7 +67,7 @@ const RegisterPet = () => {
 
   return (
     <>
-      <Header title="반려견 정보 입력" />
+      <Header title="반려동물 정보" />
       <SafeAreaView style={styles.container}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -75,14 +75,14 @@ const RegisterPet = () => {
         >
           <ScrollView style={styles.scrollView}>
             <View style={styles.form}>
-              {/* 반려견 이름 */}
+              {/* 반려동물 이름 */}
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>반려견 이름</Text>
+                <Text style={styles.label}>반려동물 이름</Text>
                 <TextInput
                   style={styles.input}
                   value={petData.name}
                   onChangeText={(text) => setPetData(prev => ({ ...prev, name: text }))}
-                  placeholder="반려견 이름을 입력하세요"
+                  placeholder="반려동물 이름을 입력하세요"
                 />
               </View>
 
@@ -110,13 +110,13 @@ const RegisterPet = () => {
 
               {/* 견종 */}
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>견종</Text>
+                <Text style={styles.label}>품종</Text>
                 <SelectDropdown
                   data={breeds}
                   onSelect={(selectedItem) => {
                     setPetData(prev => ({ ...prev, breed: selectedItem.value }));
                   }}
-                  defaultButtonText="견종을 선택하세요"
+                  defaultButtonText="품종을 선택하세요"
                   buttonTextAfterSelection={(selectedItem) => selectedItem.label}
                   rowTextForSelection={(item) => item.label}
                   buttonStyle={styles.dropdownButton}
@@ -189,14 +189,13 @@ const RegisterPet = () => {
                 </View>
               </View>
 
-              {/* 앓고 있는 질병 */}
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>앓고 있는 질병</Text>
+                <Text style={styles.label}>병명</Text>
                 <TextInput
                   style={styles.textArea}
                   value={petData.diseases}
                   onChangeText={(text) => setPetData(prev => ({ ...prev, diseases: text }))}
-                  placeholder="앓고 있는 질병을 입력하세요"
+                  placeholder="병명을 입력하세요"
                   multiline
                   numberOfLines={4}
                   textAlignVertical="top"
@@ -204,7 +203,7 @@ const RegisterPet = () => {
               </View>
 
               <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-                <Text style={styles.submitButtonText}>저장하기</Text>
+                <Text style={styles.submitButtonText}>등록하기</Text>
               </TouchableOpacity>
             </View>
           </ScrollView>
