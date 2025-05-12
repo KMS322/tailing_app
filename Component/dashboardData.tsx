@@ -49,13 +49,14 @@ const DashboardData = ({screen, data}: DashboardDataProps ) => {
 
 const styles = StyleSheet.create({
   container: {
-    width: '100%',
+    width: '98%',
     height: 'auto',
     borderWidth: 1,
     borderRadius: 16,
     borderColor: '#F5B75C',
     paddingTop: 8,
     paddingBottom: 8,
+    alignSelf: "center",
     marginTop: 10,
   },
   metrics_container: {

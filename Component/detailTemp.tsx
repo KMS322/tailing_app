@@ -176,8 +176,9 @@ const DetailTemp = ({ tempData, screen }: { tempData: number, screen: string }) 
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    width: '98%',
     backgroundColor: '#ffffff',
+    alignSelf: 'center',
   },
   chart_container: {
     paddingHorizontal: 0,

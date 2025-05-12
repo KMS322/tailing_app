@@ -72,15 +72,6 @@ const DetailHeart = ({ hrData, screen }: { hrData: number, screen: string}) => {
     <SafeAreaView style={styles.container}>
       <View style={styles.chart_container}>
         <View style={styles.chart_wrapper}>
-          {/* Y축 레이블 */}
-          <View style={styles.yAxis}>
-            {yLabels.map((label, index) => (
-              <Text key={index} style={styles.yAxisLabel}>
-                {label}
-              </Text>
-            ))}
-          </View>
-          
           {/* 그래프 영역 */}
           <ScrollView 
             ref={scrollViewRef}
@@ -131,8 +122,9 @@ const DetailHeart = ({ hrData, screen }: { hrData: number, screen: string}) => {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    width: '98%',
     backgroundColor: '#ffffff',
+    alignSelf: 'center',
   },
   chart_container: {
     paddingHorizontal: 0, 
@@ -140,7 +132,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     borderRadius: 0,
     marginHorizontal: 0, 
-    marginVertical: 4, // 상하 마진 유지
+    marginVertical: 4,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -153,17 +145,6 @@ const styles = StyleSheet.create({
   chart_wrapper: {
     flexDirection: 'row',
     height: 200,
-  },
-  yAxis: {
-    width: 40,
-    justifyContent: 'space-between',
-    paddingVertical: 16, 
-  },
-  yAxisLabel: {
-    fontSize: 10,
-    color: '#262626',
-    textAlign: 'right',
-    paddingRight: 5,
   },
   graphContainer: {
     flex: 1,
