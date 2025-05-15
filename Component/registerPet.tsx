@@ -17,6 +17,7 @@ import SelectDropdown from 'react-native-select-dropdown';
 import { usePetStore } from '../store/useStore';
 import { getToken } from '../utils/storage';
 import MessageModal from './modal/messageModal';
+
 type PetData = {
   name: string;
   birth: Date;
@@ -27,6 +28,7 @@ type PetData = {
 };
 
 const RegisterPet = ({ navigation }) => {
+  const [errors, setErrors] = useState<FormErrors>({});
   const { registerPet, registerLoading, fetchPets } = usePetStore();
   const [openMessageModal, setOpenMessageModal] = useState(false);
   const [formData, setFormData] = useState<PetData>({
@@ -55,7 +57,32 @@ const RegisterPet = ({ navigation }) => {
     });
   };
 
+  type FormErrors = {
+    [key in keyof PetData]?: string;
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = {};
+
+    if (!formData.name) {
+      newErrors.name = '반려동물 이름을 입력해주세요.';
+    }
+
+    if (!formData.birth) {
+      newErrors.birth = '생년월일을 입력해주세요.';
+    }
+
+    if (!formData.breed) {
+      newErrors.breed = '품종을 입력해주세요.';
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleRegister = async () => {
+    if (!validateForm()) {
+      return;
+    }
     try {
       const token = await getToken();
       if (!token) {
@@ -69,12 +96,12 @@ const RegisterPet = ({ navigation }) => {
       const petData = {
         ...formData,
         birth: formData.birth.getFullYear().toString() + '-' +
-               (formData.birth.getMonth() + 1).toString().padStart(2, '0') + '-' +
-               formData.birth.getDate().toString().padStart(2, '0'),
+          (formData.birth.getMonth() + 1).toString().padStart(2, '0') + '-' +
+          formData.birth.getDate().toString().padStart(2, '0'),
         device_code
       };
 
-      await registerPet(petData); 
+      await registerPet(petData);
       setOpenMessageModal(true);
       await fetchPets();
       navigation.navigate('PetLists');
@@ -103,6 +130,9 @@ const RegisterPet = ({ navigation }) => {
                   onChangeText={(text) => setFormData(prev => ({ ...prev, name: text }))}
                   placeholder="반려동물 이름을 입력하세요"
                 />
+                {errors.name && (
+                  <Text style={styles.errorText}>{errors.name}</Text>
+                )}
               </View>
 
               {/* 생년월일 */}
@@ -125,6 +155,9 @@ const RegisterPet = ({ navigation }) => {
                     maximumDate={new Date()}
                   />
                 )}
+                {errors.birth && (
+                  <Text style={styles.errorText}>{errors.birth}</Text>
+                )}
               </View>
 
               {/* 견종 */}
@@ -136,6 +169,9 @@ const RegisterPet = ({ navigation }) => {
                   onChangeText={(text) => setFormData(prev => ({ ...prev, breed: text }))}
                   placeholder="품종을 입력하세요(ex : 말티즈, 푸들)"
                 />
+                {errors.breed && (
+                  <Text style={styles.errorText}>{errors.breed}</Text>
+                )}
               </View>
 
               {/* 성별 */}
@@ -213,8 +249,8 @@ const RegisterPet = ({ navigation }) => {
                 />
               </View>
 
-              <TouchableOpacity 
-                style={[styles.submitButton, registerLoading && styles.submitButtonDisabled]} 
+              <TouchableOpacity
+                style={[styles.submitButton, registerLoading && styles.submitButtonDisabled]}
                 onPress={handleRegister}
                 disabled={registerLoading}
               >
@@ -237,6 +273,11 @@ const RegisterPet = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
+  errorText: {
+    color: '#FF3B30',
+    fontSize: 12,
+    marginTop: 4,
+  },
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',

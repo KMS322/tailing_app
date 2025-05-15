@@ -59,7 +59,6 @@ const SECONDS_TO_SCAN_FOR = 7;
 const SERVICE_UUIDS: string[] = [];
 const windowWidth = Dimensions.get('window').width;
 const SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
-// const CHARACTERISTIC_UUID_RX = '6e400002-b5a3-f393-e0A9-e50e24dcca9e';
 const characteristicUUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
 const CHARACTERISTIC_UUID_RX = '6e400002-b5a3-f393-e0A9-e50e24dcca9e';
 // const CHARACTERISTIC_UUID_RX = '2A37';
@@ -102,10 +101,8 @@ async function requestLocationPermission() {
     );
     if (granted === PermissionsAndroid.RESULTS.GRANTED) {
       console.log('Location permission granted');
-      // 위치 권한이 부여되었습니다. BLE 작업을 계속할 수 있습니다.
     } else {
       console.log('Location permission denied');
-      // 위치 권한이 거부되었습니다. 적절한 처리를 해야 합니다.
     }
   } catch (err) {
     console.warn(err);
@@ -121,8 +118,8 @@ declare module 'react-native-ble-manager' {
 
 const Dashboard = ({ route }: { route: DashboardScreenRouteProp }) => {
   const navigation = useNavigation<NavigationProp>();
-  const { selectedPet } = route.params;
-  console.log('Dashboard 속 Selected Pet:', selectedPet);
+  // const { selectedPet } = route.params;
+  // console.log('Dashboard 속 Selected Pet:', selectedPet);
   const [isScanning, setIsScanning] = useState(false);
   const [peripherals, setPeripherals] = useState(
     new Map<Peripheral['id'], Peripheral>(),
@@ -712,7 +709,7 @@ const Dashboard = ({ route }: { route: DashboardScreenRouteProp }) => {
     {orientation === 'PORTRAIT' && <Header title="디바이스 모니터링" />}
 
     <ScrollView style={styles.container}>
-      <DashboardInfo screen={orientation} pet={selectedPet}/>
+      {/* <DashboardInfo screen={orientation} pet={selectedPet}/> */}
       <DashboardChart screen={orientation}/>
       <DashboardData screen={orientation} data={{
         hrData : hrData,

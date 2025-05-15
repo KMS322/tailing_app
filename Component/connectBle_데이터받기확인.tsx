@@ -17,7 +17,6 @@ import BleManager from 'react-native-ble-manager';
 import { NativeEventEmitter, NativeModules } from 'react-native';
 import MessageModal from './modal/messageModal';
 import { Buffer } from 'buffer';
-import { useBLE } from './BLEContext';
 
 type RootStackParamList = {
   ConnectBle: {
@@ -57,7 +56,6 @@ const CHARACTERISTIC_UUID_RX = 'a3c87502-8ed3-4bdf-8a39-a01bebede295';
 const ConnectBle = ({ route }: Props) => {
   // const { selectedPet } = route.params;
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { dispatch, addChartData } = useBLE();
   const [isScanning, setIsScanning] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(false);
@@ -176,28 +174,31 @@ const ConnectBle = ({ route }: Props) => {
 
   const handleDeviceSelect = async (deviceId: string) => {
     try {
+      setSelectedDevice(deviceId);
+      console.log('Connecting to device:', deviceId);
+      
+      // 연결 시도
       await BleManager.connect(deviceId);
       console.log('Connected to device:', deviceId);
       
-      // 연결 상태 업데이트
+      // 연결 성공 시 상태 업데이트
       setIsConnected(true);
-      dispatch({ type: 'CONNECT_DEVICE', payload: deviceId });
       
-      // peripherals 맵 업데이트
-      setPeripherals(prevPeripherals => {
-        const newPeripherals = new Map(prevPeripherals);
-        const peripheral = newPeripherals.get(deviceId);
+      // 연결된 디바이스 정보 업데이트
+      setPeripherals(map => {
+        const newMap = new Map(map);
+        const peripheral = newMap.get(deviceId);
         if (peripheral) {
-          newPeripherals.set(deviceId, { ...peripheral, connected: true });
+          newMap.set(deviceId, { ...peripheral, connected: true });
         }
-        return newPeripherals;
+        return newMap;
       });
 
       // 서비스 및 특성 검색
       const peripheralInfo = await BleManager.retrieveServices(deviceId);
       console.log('Peripheral info:', peripheralInfo);
 
-      // 알림 시작
+      // 데이터 수신을 위한 특성 구독
       await BleManager.startNotification(deviceId, SERVICE_UUID, CHARACTERISTIC_UUID_RX)
         .then(() => {
           console.log('Notification started on characteristic:', CHARACTERISTIC_UUID_RX);
@@ -207,27 +208,37 @@ const ConnectBle = ({ route }: Props) => {
           console.error('Error starting notification:', error);
         });
 
-      setModalContent('디바이스가 연결되었습니다.');
+      // 연결 성공 모달 표시
+      setModalContent({
+        title: '연결 성공',
+        content: '디바이스가 연결되었습니다.'
+      });
       setOpenMessageModal(true);
     } catch (error) {
       console.error('Connection error:', error);
+      setSelectedDevice(null);
       setIsConnected(false);
       setIsSubscribed(false);
-      setModalContent('디바이스 연결에 실패했습니다.');
+      // 연결 실패 모달 표시
+      setModalContent({
+        title: '연결 실패',
+        content: '디바이스 연결에 실패했습니다.'
+      });
       setOpenMessageModal(true);
     }
   };
 
   const handleUpdateValueForCharacteristic = (data: any) => {
-    const value = data.value;
+    console.log("aaaaaa");
+    const { value } = data;
+    // Base64로 인코딩된 값을 디코딩
     const decodedValue = Buffer.from(value, 'base64').toString('utf-8');
-    console.log('Received data:', decodedValue);
-    
-    // 첫 번째 숫자만 추출하여 차트 데이터로 전송
-    const numbers = decodedValue.split(',').map(num => parseInt(num.trim()));
-    if (numbers.length > 0 && !isNaN(numbers[0])) {
-      addChartData(numbers[0]);
-    }
+    console.log('Received data from device:', {
+      peripheral: data.peripheral,
+      characteristic: data.characteristic,
+      value: value,
+      decodedValue: decodedValue
+    });
   };
 
   const handleDisconnect = async () => {
@@ -275,8 +286,6 @@ const ConnectBle = ({ route }: Props) => {
     // navigation.navigate('Dashboard', {
     //   selectedPet,
     // });
-      navigation.navigate('Dashboard');
-    
   };
 
   return (
