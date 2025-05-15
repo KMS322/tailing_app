@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -26,17 +26,33 @@ type PetData = {
   disease: string;
 };
 
-const RegisterPet = ({ navigation }) => {
-  const { registerPet, registerLoading, fetchPets } = usePetStore();
+const EditPet = ({ route, navigation }) => {
+  const { pet } = route.params;
+  const { updatePet, updateLoading, updateError, fetchPets } = usePetStore();
   const [openMessageModal, setOpenMessageModal] = useState(false);
   const [formData, setFormData] = useState<PetData>({
     name: '',
-    birth: new Date(2020, 0, 1),
+    birth: new Date(),
     breed: '',
     gender: true,
     isNeutered: false,
     disease: '',
   });
+
+  useEffect(() => {
+    // Convert string date to Date object
+    const [year, month, day] = pet.birth.split('-').map(Number);
+    const birthDate = new Date(year, month - 1, day);
+
+    setFormData({
+      name: pet.name,
+      birth: birthDate,
+      breed: pet.breed,
+      gender: pet.gender,
+      isNeutered: pet.isNeutered,
+      disease: pet.disease,
+    });
+  }, [pet]);
 
   const [showDatePicker, setShowDatePicker] = useState(false);
 
@@ -55,7 +71,7 @@ const RegisterPet = ({ navigation }) => {
     });
   };
 
-  const handleRegister = async () => {
+  const handleUpdate = async () => {
     try {
       const token = await getToken();
       if (!token) {
@@ -65,29 +81,43 @@ const RegisterPet = ({ navigation }) => {
       }
 
       const { device_code } = token;
+      if (!device_code) {
+        Alert.alert("오류", "디바이스 코드를 찾을 수 없습니다. 다시 로그인해주세요.");
+        return;
+      }
 
       const petData = {
         ...formData,
         birth: formData.birth.getFullYear().toString() + '-' +
                (formData.birth.getMonth() + 1).toString().padStart(2, '0') + '-' +
                formData.birth.getDate().toString().padStart(2, '0'),
-        device_code
+        device_code,
+        pet_code: pet.pet_code
       };
 
-      await registerPet(petData); 
+      await updatePet(petData);
       setOpenMessageModal(true);
       await fetchPets();
       navigation.navigate('PetLists');
     } catch (error) {
-      console.error('Error registering pet:', error);
-      Alert.alert("등록 실패", "펫 등록에 실패했습니다. 다시 시도해주세요.");
+      console.error('Error updating pet:', error);
+      Alert.alert("수정 실패", "펫 정보 수정에 실패했습니다. 다시 시도해주세요.");
     }
   };
 
+  const breeds = [
+    { label: '견종을 선택하세요', value: '' },
+    { label: '리트리버', value: 'retriever' },
+    { label: '말티즈', value: 'maltese' },
+    { label: '푸들', value: 'poodle' },
+    { label: '진돗개', value: 'jindo' },
+    { label: '시바견', value: 'shiba' },
+    { label: '기타', value: 'other' },
+  ];
 
   return (
     <>
-      <Header title="반려동물 등록" />
+      <Header title="반려동물 정보 수정" />
       <SafeAreaView style={styles.container}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -102,6 +132,7 @@ const RegisterPet = ({ navigation }) => {
                   value={formData.name}
                   onChangeText={(text) => setFormData(prev => ({ ...prev, name: text }))}
                   placeholder="반려동물 이름을 입력하세요"
+                  placeholderTextColor="#999999"
                 />
               </View>
 
@@ -135,6 +166,7 @@ const RegisterPet = ({ navigation }) => {
                   value={formData.breed}
                   onChangeText={(text) => setFormData(prev => ({ ...prev, breed: text }))}
                   placeholder="품종을 입력하세요(ex : 말티즈, 푸들)"
+                  placeholderTextColor="#999999"
                 />
               </View>
 
@@ -207,6 +239,7 @@ const RegisterPet = ({ navigation }) => {
                   value={formData.disease}
                   onChangeText={(text) => setFormData(prev => ({ ...prev, disease: text }))}
                   placeholder="병명을 입력하세요"
+                  placeholderTextColor="#999999"
                   multiline
                   numberOfLines={4}
                   textAlignVertical="top"
@@ -214,12 +247,12 @@ const RegisterPet = ({ navigation }) => {
               </View>
 
               <TouchableOpacity 
-                style={[styles.submitButton, registerLoading && styles.submitButtonDisabled]} 
-                onPress={handleRegister}
-                disabled={registerLoading}
+                style={[styles.submitButton, updateLoading && styles.submitButtonDisabled]} 
+                onPress={handleUpdate}
+                disabled={updateLoading}
               >
                 <Text style={styles.submitButtonText}>
-                  {registerLoading ? '등록 중...' : '등록하기'}
+                  {updateLoading ? '수정 중...' : '수정하기'}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -228,8 +261,8 @@ const RegisterPet = ({ navigation }) => {
       </SafeAreaView>
       <MessageModal
         visible={openMessageModal}
-        title="등록 완료"
-        content="반려동물이 등록되었습니다."
+        title="수정 완료"
+        content="반려동물 정보가 수정되었습니다."
         onClose={() => setOpenMessageModal(false)}
       />
     </>
@@ -358,4 +391,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default RegisterPet; 
+export default EditPet; 

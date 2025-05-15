@@ -9,9 +9,13 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-
+import axios from 'axios';
+import { API_URL } from './constant/contants';
+import { setToken, setDeviceCode } from '../utils/storage';
+import MessageModal from './modal/messageModal';
 type RootStackParamList = {
   Login: undefined;
   SignUp: undefined;
@@ -36,9 +40,8 @@ const Login = ({ navigation }: { navigation: NavigationProp }) => {
     id: '',
     password: '',
   });
-
   const [errors, setErrors] = useState<FormErrors>({});
-
+  const [openMessageModal, setOpenMessageModal] = useState<boolean>(false);
   // 유효성 검사
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
@@ -61,11 +64,25 @@ const Login = ({ navigation }: { navigation: NavigationProp }) => {
       return;
     }
 
-    // 임시로 바로 PetLists로 이동
-    navigation.navigate('PetLists');
+    try {
+      const response = await axios.post(`${API_URL}/user/login`, formData);
+
+      if(response.status === 200){
+        const token = response.data.data.token;
+        
+        await setToken(token);
+        // Alert.alert("로그인 성공");
+        setOpenMessageModal(true);
+        navigation.navigate('PetLists');
+      }
+    } catch(e){
+      console.error(e);
+      Alert.alert("로그인 실패", "아이디 또는 비밀번호를 확인해주세요.");
+    }
   };
 
   return (
+    <>
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -73,8 +90,9 @@ const Login = ({ navigation }: { navigation: NavigationProp }) => {
       >
         <View style={styles.content}>
           <View style={styles.header}>
-            <Text style={styles.title}>Tailing</Text>
-            <Text style={styles.subtitle}>반려견과의 새로운 소통</Text>
+            <Image source={require('../assets/images/talkTail_logo.png')} style={styles.logo} />
+            <Text style={styles.subtitle}>반려동물은 Tail로 소통하고</Text>
+            <Text style={styles.subtitle}>우리는 "Talktail"로 소통합니다.</Text>
           </View>
 
           <View style={styles.form}>
@@ -127,6 +145,13 @@ const Login = ({ navigation }: { navigation: NavigationProp }) => {
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
+    <MessageModal
+      visible={openMessageModal}
+      title="로그인 성공"
+      content="로그인이 성공적으로 완료되었습니다."
+      onClose={() => setOpenMessageModal(false)}
+    />
+ </>
   );
 };
 
@@ -146,6 +171,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 60,
     marginBottom: 40,
+  },
+  logo: {
+    width: 300,
+    height: 100,
+    marginBottom: 4
   },
   title: {
     fontSize: 36,

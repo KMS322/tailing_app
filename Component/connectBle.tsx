@@ -7,33 +7,46 @@ import {
   ScrollView,
   SafeAreaView,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, RouteProp } from '@react-navigation/native';
 import Header from './header';
 import NavigationBar from './navigationBar';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 type RootStackParamList = {
-  ConnectBle: undefined;
+  ConnectBle: {
+    selectedPet: {
+      name: string;
+      gender: boolean;
+      birth: string;
+      breed: string;
+      isNeutered: boolean;
+      disease: string;
+    };
+  };
   Dashboard: {
     selectedPet: {
       name: string;
-      gender: string;
-      birthDate: string;
+      gender: boolean;
+      birth: string;
       breed: string;
       isNeutered: boolean;
-      diseases: string;
+      disease: string;
     };
   };
 };
 
-type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+type ConnectBleScreenRouteProp = RouteProp<RootStackParamList, 'ConnectBle'>;
 
-const ConnectBle: React.FC = () => {
-  const navigation = useNavigation<NavigationProp>();
+type Props = {
+  route: ConnectBleScreenRouteProp;
+};
+
+const ConnectBle = ({ route }: Props) => {
+  const { selectedPet } = route.params;
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [isScanning, setIsScanning] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(false);
-
   // Mock device list
   const mockDevices = [
     { id: '1', name: 'Zephy45' },
@@ -63,18 +76,8 @@ const ConnectBle: React.FC = () => {
   };
 
   const handleMonitoring = () => {
-    // Mock pet data for navigation
-    const mockPetData = {
-      name: '멍멍이',
-      gender: 'male',
-      birthDate: '2020-05-15',
-      breed: '리트리버',
-      isNeutered: true,
-      diseases: '심장사상충, 슬개골 탈구',
-    };
-    
     navigation.navigate('Dashboard', {
-      selectedPet: mockPetData
+      selectedPet,
     });
   };
 

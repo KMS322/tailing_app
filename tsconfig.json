@@ -1,6 +1,12 @@
 {
     "compilerOptions": {
       "jsx": "react",
+      "types": ["react-native", "jest"],
+      "typeRoots": ["./types", "./node_modules/@types"]
     },
     "extends": "@tsconfig/react-native/tsconfig.json",
+    "include": [
+      "src/**/*",
+      "env.d.ts"
+    ]
   }
