@@ -229,7 +229,6 @@ const ConnectBle = ({ route }: Props) => {
   };
 
   const handleUpdateValueForCharacteristic = (data: any) => {
-    console.log("aaaaaa");
     const { value } = data;
     // Base64로 인코딩된 값을 디코딩
     const decodedValue = Buffer.from(value, 'base64').toString('utf-8');

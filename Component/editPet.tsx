@@ -14,7 +14,7 @@ import {
 import Header from './header';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import SelectDropdown from 'react-native-select-dropdown';
-import { usePetStore } from '../store/useStore';
+import { userStore } from '../store/userStore';
 import { getToken } from '../utils/storage';
 import MessageModal from './modal/messageModal';
 type PetData = {
@@ -28,7 +28,7 @@ type PetData = {
 
 const EditPet = ({ route, navigation }) => {
   const { pet } = route.params;
-  const { updatePet, updateLoading, updateError, fetchPets } = usePetStore();
+  const { updatePet, updateLoading, updateError, fetchPets } = userStore();
   const [openMessageModal, setOpenMessageModal] = useState(false);
   const [formData, setFormData] = useState<PetData>({
     name: '',

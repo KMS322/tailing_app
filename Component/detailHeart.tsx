@@ -62,7 +62,10 @@ const DetailHeart = ({ screen }: { screen: string }) => {
     try {
       if (!isAutoScrolling || !chartData || !Array.isArray(chartData) || chartData.length === 0) return;
 
+      // 데이터 포인트 수를 줄임 (모든 포인트를 사용하지 않고 일부만 사용)
+      const step = Math.max(1, Math.floor(chartData.length / 50));
       const newDataPoints: IRDataPoint[] = chartData
+        .filter((_, index) => index % step === 0) // 데이터 포인트 샘플링
         .filter(value => typeof value === 'number' && !isNaN(value) && isFinite(value))
         .map((value, index) => ({
           timestamp: Date.now() + index * 20,
@@ -71,21 +74,21 @@ const DetailHeart = ({ screen }: { screen: string }) => {
 
       setData(prevData => {
         const updatedData = [...prevData, ...newDataPoints];
-        // 최대 1000개의 데이터 포인트만 유지
-        return updatedData.slice(-1000);
+        // 최대 50개의 데이터 포인트만 유지
+        return updatedData.slice(-50);
       });
     } catch (error) {
       console.error('Error processing BLE data:', error);
     }
   }, [chartData, isAutoScrolling]);
 
-  // 자동 스크롤 효과
+  // 자동 스크롤 효과 - 애니메이션 제거
   useEffect(() => {
     if (!isAutoScrolling) return;
 
     const scrollInterval = setInterval(() => {
       if (scrollViewRef.current) {
-        scrollViewRef.current.scrollToEnd({ animated: true });
+        scrollViewRef.current.scrollToEnd({ animated: false }); // 애니메이션 비활성화
       }
     }, 100);
 
@@ -109,7 +112,7 @@ const DetailHeart = ({ screen }: { screen: string }) => {
     }
   };
 
-  // SVG Path 생성
+  // SVG Path 생성 - 최적화
   const createPath = () => {
     try {
       if (!data || data.length === 0) return '';
@@ -119,10 +122,13 @@ const DetailHeart = ({ screen }: { screen: string }) => {
       
       if (range <= 0) return '';
 
+      // 데이터 포인트 수를 줄임 (모든 포인트를 사용하지 않고 일부만 사용)
+      const step = Math.max(1, Math.floor(data.length / 50));
       const points = data
+        .filter((_, index) => index % step === 0) // 데이터 포인트 샘플링
         .filter(point => typeof point.value === 'number' && !isNaN(point.value) && isFinite(point.value))
         .map((item, index) => {
-          const x = index * pointWidth + padding;
+          const x = index * pointWidth * step + padding;
           const y = chartHeight - padding - ((item.value - min) / range) * graphHeight;
           return `${x},${y}`;
         });

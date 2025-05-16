@@ -16,6 +16,7 @@ import axios from 'axios';
 import { API_URL } from './constant/contants';
 import { setToken, setDeviceCode } from '../utils/storage';
 import MessageModal from './modal/messageModal';
+
 type RootStackParamList = {
   Login: undefined;
   SignUp: undefined;
@@ -58,7 +59,6 @@ const Login = ({ navigation }: { navigation: NavigationProp }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // 로그인 제출
   const handleSubmit = async () => {
     if (!validateForm()) {
       return;
@@ -66,12 +66,10 @@ const Login = ({ navigation }: { navigation: NavigationProp }) => {
 
     try {
       const response = await axios.post(`${API_URL}/user/login`, formData);
-
       if(response.status === 200){
         const token = response.data.data.token;
         
         await setToken(token);
-        // Alert.alert("로그인 성공");
         setOpenMessageModal(true);
         navigation.navigate('PetLists');
       }
@@ -176,12 +174,6 @@ const styles = StyleSheet.create({
     width: 300,
     height: 100,
     marginBottom: 4
-  },
-  title: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: '#F0663F',
-    marginBottom: 8,
   },
   subtitle: {
     fontSize: 18,

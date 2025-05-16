@@ -17,7 +17,7 @@ import axios from 'axios';
 import { API_URL } from './constant/contants';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { usePetStore } from '../store/deviceStore';
+import { deviceStore } from '../store/deviceStore';
 
 type RootStackParamList = {
   Login: undefined;
@@ -60,7 +60,7 @@ const SignUp = () => {
   const [openAlertModal, setOpenAlertModal] = useState(false);
   const [modalContent, setModalContent] = useState({ title: '', content: '' });
   const navigation = useNavigation<NavigationProp>();
-  const { checkCode, checkLoading, checkError } = usePetStore();
+  const { checkCode, checkLoading, checkError } = deviceStore();
 
   // 전화번호 포맷팅 함수
   const formatPhoneNumber = (text: string) => {
@@ -196,9 +196,9 @@ const SignUp = () => {
 
   // 회원가입 제출
   const handleSubmit = async () => {
-    if (!validateForm()) {
-      return;
-    }
+    // if (!validateForm()) {
+    //   return;
+    // }
 
     try {
       const response = await axios.post(`${API_URL}/user/signup`, formData);

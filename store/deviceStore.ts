@@ -3,20 +3,19 @@ import axios from 'axios';
 import { API_URL } from '../Component/constant/contants';
 import { getToken } from '../utils/storage';
 
-interface PetStore {
+interface DeviceStore {
   checkLoading: boolean;
   checkError: string | null;
 
   checkCode: (deviceCode: string) => Promise<void>;
 }
 
-export const usePetStore = create<PetStore>((set, get) => ({
+export const deviceStore = create<DeviceStore>((set, get) => ({
   checkLoading: false,
   checkError: null,
 
   checkCode: async (deviceCode: string) => {
     try {
-      console.log("store 속 deviceCode : ", deviceCode);
       set({ checkLoading: true, checkError: null });
       const response = await axios.post(`${API_URL}/device/check`, {deviceCode});
       

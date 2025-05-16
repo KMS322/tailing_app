@@ -2,13 +2,12 @@ import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
-  Pressable,
+  TouchableOpacity,
   StyleSheet,
   ScrollView,
   SafeAreaView,
   Platform,
   PermissionsAndroid,
-  Alert,
 } from 'react-native';
 import { useNavigation, RouteProp } from '@react-navigation/native';
 import Header from './header';
@@ -19,13 +18,10 @@ import { NativeEventEmitter, NativeModules } from 'react-native';
 import MessageModal from './modal/messageModal';
 import { Buffer } from 'buffer';
 import { useBLE } from './BLEContext';
-import dayjs from 'dayjs';
 
 type RootStackParamList = {
   ConnectBle: {
     selectedPet: {
-      device_code: string;
-      pet_code: string;
       name: string;
       gender: boolean;
       birth: string;
@@ -59,10 +55,9 @@ const SERVICE_UUID = 'a3c87500-8ed3-4bdf-8a39-a01bebede295';
 const CHARACTERISTIC_UUID_RX = 'a3c87502-8ed3-4bdf-8a39-a01bebede295';
 
 const ConnectBle = ({ route }: Props) => {
-  
-  const { selectedPet } = route.params;
+  // const { selectedPet } = route.params;
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { dispatch, addChartData, collectData } = useBLE();
+  const { dispatch, addChartData } = useBLE();
   const [isScanning, setIsScanning] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(false);
@@ -70,8 +65,6 @@ const ConnectBle = ({ route }: Props) => {
   const [openMessageModal, setOpenMessageModal] = useState(false);
   const [modalContent, setModalContent] = useState({ title: '', content: '' });
   const [isSubscribed, setIsSubscribed] = useState(false);
-  const [lastUpdateTime, setLastUpdateTime] = useState(Date.now());
-  const [dataBuffer, setDataBuffer] = useState<number[]>([]);
 
   useEffect(() => {
     // BLE 초기화
@@ -88,7 +81,6 @@ const ConnectBle = ({ route }: Props) => {
       bleManagerEmitter.addListener('BleManagerDiscoverPeripheral', handleDiscoverPeripheral),
       bleManagerEmitter.addListener('BleManagerStopScan', handleStopScan),
       bleManagerEmitter.addListener('BleManagerDidUpdateValueForCharacteristic', handleUpdateValueForCharacteristic),
-      bleManagerEmitter.addListener('BleManagerDisconnectPeripheral', handleDisconnectPeripheral),
     ];
 
     // 컴포넌트 언마운트 시 이벤트 리스너 제거
@@ -103,10 +95,7 @@ const ConnectBle = ({ route }: Props) => {
   const handleDiscoverPeripheral = (peripheral) => {
     // console.log('Discovered peripheral:', peripheral);
     if (peripheral.name === 'Zephy46') {
-      setPeripherals(map => new Map(map.set(peripheral.id, {
-        ...peripheral,
-        connected: false
-      })));
+      setPeripherals(map => new Map(map.set(peripheral.id, peripheral)));
     }
   };
 
@@ -132,9 +121,6 @@ const ConnectBle = ({ route }: Props) => {
       // 스캔 시작
       setPeripherals(new Map());
       setIsScanning(true);
-      setIsConnected(false);
-      setIsSubscribed(false);
-      setSelectedDevice(null);
       
       console.log('Starting scan...');
       BleManager.scan([], 10, true)
@@ -191,11 +177,12 @@ const ConnectBle = ({ route }: Props) => {
   const handleDeviceSelect = async (deviceId: string) => {
     try {
       await BleManager.connect(deviceId);
+      console.log('Connected to device:', deviceId);
       
       // 연결 상태 업데이트
       setIsConnected(true);
-      dispatch({type: 'CONNECT_DEVICE', payload: {startDate: dayjs().format('YYYYMMDD'), startTime: dayjs().format('HHmmss'), deviceCode: selectedPet.device_code, petCode: selectedPet.pet_code}})
-
+      dispatch({ type: 'CONNECT_DEVICE', payload: deviceId });
+      
       // peripherals 맵 업데이트
       setPeripherals(prevPeripherals => {
         const newPeripherals = new Map(prevPeripherals);
@@ -208,6 +195,7 @@ const ConnectBle = ({ route }: Props) => {
 
       // 서비스 및 특성 검색
       const peripheralInfo = await BleManager.retrieveServices(deviceId);
+      console.log('Peripheral info:', peripheralInfo);
 
       // 알림 시작
       await BleManager.startNotification(deviceId, SERVICE_UUID, CHARACTERISTIC_UUID_RX)
@@ -219,19 +207,13 @@ const ConnectBle = ({ route }: Props) => {
           console.error('Error starting notification:', error);
         });
 
-      setModalContent({
-        title: '연결 성공',
-        content: '디바이스가 연결되었습니다.'
-      });
+      setModalContent('디바이스가 연결되었습니다.');
       setOpenMessageModal(true);
     } catch (error) {
       console.error('Connection error:', error);
       setIsConnected(false);
       setIsSubscribed(false);
-      setModalContent({
-        title: '연결 실패',
-        content: '디바이스 연결에 실패했습니다.'
-      });
+      setModalContent('디바이스 연결에 실패했습니다.');
       setOpenMessageModal(true);
     }
   };
@@ -239,51 +221,14 @@ const ConnectBle = ({ route }: Props) => {
   const handleUpdateValueForCharacteristic = (data: any) => {
     const value = data.value;
     const decodedValue = Buffer.from(value, 'base64').toString('utf-8');
+    console.log('Received data:', decodedValue);
     
-    const numbers = decodedValue.split(',').map(num => {
-      const parsed = parseInt(num.trim());
-      return isNaN(parsed) ? 0 : parsed;
-    });
+    // 첫 번째 숫자만 추출하여 차트 데이터로 전송
+    const numbers = decodedValue.split(',').map(num => parseInt(num.trim()));
     if (numbers.length > 0 && !isNaN(numbers[0])) {
       addChartData(numbers[0]);
-      collectData(numbers);
     }
   };
-
-  const handleDisconnectPeripheral = (data: any) => {
-    console.log('Device disconnected:', data.peripheral);
-    setIsConnected(false);
-    setIsSubscribed(false);
-    setSelectedDevice(null);
-    
-    // peripherals 맵 업데이트
-    setPeripherals(map => {
-      const newMap = new Map(map);
-      const peripheral = newMap.get(data.peripheral);
-      if (peripheral) {
-        newMap.set(data.peripheral, { ...peripheral, connected: false });
-      }
-      return newMap;
-    });
-
-    // 모달 표시를 setTimeout으로 감싸서 상태 업데이트 후 실행되도록 함
-    setTimeout(() => {
-      setModalContent({
-        title: '연결 끊김',
-        content: '디바이스와의 연결이 끊어졌습니다.'
-      });
-      setOpenMessageModal(true);
-    }, 100);
-  };
-
-  // 컴포넌트 언마운트 시 남은 데이터 처리
-  useEffect(() => {
-    return () => {
-      if (dataBuffer.length > 0) {
-        collectData(dataBuffer);
-      }
-    };
-  }, [dataBuffer]);
 
   const handleDisconnect = async () => {
     if (selectedDevice) {
@@ -327,10 +272,10 @@ const ConnectBle = ({ route }: Props) => {
   };
 
   const handleMonitoring = () => {
-    navigation.navigate('Dashboard', {
-      selectedPet,
-    });
-      // navigation.navigate('Dashboard');
+    // navigation.navigate('Dashboard', {
+    //   selectedPet,
+    // });
+      navigation.navigate('Dashboard');
     
   };
 
@@ -344,13 +289,12 @@ const ConnectBle = ({ route }: Props) => {
             contentContainerStyle={styles.deviceListContent}
           >
             {Array.from(peripherals.values()).map((peripheral) => (
-              <Pressable
+              <TouchableOpacity
                 key={peripheral.id}
-                style={({ pressed }) => [
+                style={[
                   styles.deviceItem,
                   selectedDevice === peripheral.id && styles.selectedDevice,
                   peripheral.connected && styles.connectedDevice,
-                  pressed && styles.pressedDevice
                 ]}
                 onPress={() => handleDeviceSelect(peripheral.id)}
                 disabled={peripheral.connected}
@@ -359,31 +303,27 @@ const ConnectBle = ({ route }: Props) => {
                   {peripheral.name}
                   {peripheral.connected ? ' (연결됨)' : ''}
                 </Text>
-              </Pressable>
+              </TouchableOpacity>
             ))}
           </ScrollView>
         </View>
-        <Pressable
-          style={({ pressed }) => [
+        <TouchableOpacity
+          style={[
             styles.scanButton,
             isConnected && styles.disconnectButton,
-            pressed && styles.pressedButton
           ]}
           onPress={isConnected ? handleDisconnect : startScan}
         >
           <Text style={styles.buttonText}>
             {isConnected ? '디바이스 연결 끊기' : (isScanning ? '탐색 중...' : '주변 기기 탐색')}
           </Text>
-        </Pressable>
-        <Pressable
-          style={({ pressed }) => [
-            styles.monitoringButton,
-            pressed && styles.pressedButton
-          ]}
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.monitoringButton}
           onPress={handleMonitoring}
         >
           <Text style={styles.buttonText}>모니터링 하기</Text>
-        </Pressable>
+        </TouchableOpacity>
       </SafeAreaView>
       <NavigationBar />
       <MessageModal
@@ -464,14 +404,6 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: '500',
-  },
-  pressedDevice: {
-    opacity: 0.7,
-    transform: [{ scale: 0.98 }]
-  },
-  pressedButton: {
-    opacity: 0.8,
-    transform: [{ scale: 0.98 }]
   },
 });
 

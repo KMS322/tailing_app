@@ -11,8 +11,8 @@ import {
 import Header from './header';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { usePetStore } from '../store/useStore';
-import type { Pet } from '../store/useStore';
+import { userStore } from '../store/userStore';
+import type { Pet } from '../store/userStore';
 import ConfirmModal from './modal/confirmModal';
 import MessageModal from './modal/messageModal';
 
@@ -46,7 +46,7 @@ type RootStackParamList = {
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const PetLists = ({ navigation }) => {
-  const { pets, loadLoading, loadError, fetchPets, deletePet, deleteLoading, deleteError } = usePetStore();
+  const { pets, loadLoading, loadError, fetchPets, deletePet, deleteLoading, deleteError } = userStore();
   const [expandedPetId, setExpandedPetId] = useState<string | null>(null);
   const [selectedPetId, setSelectedPetId] = useState<string | null>(null);
   const [openConfirmModal, setOpenConfirmModal] = useState<boolean>(false);
