@@ -22,20 +22,20 @@ type PetData = {
   birth: Date;
   breed: string;
   gender: boolean;
-  isNeutered: boolean;
+  neutered: boolean;
   disease: string;
 };
 
 const EditPet = ({ route, navigation }) => {
   const { pet } = route.params;
-  const { updatePet, updateLoading, updateError, fetchPets } = userStore();
+  const { updatePet, updateLoading, fetchPets } = userStore();
   const [openMessageModal, setOpenMessageModal] = useState(false);
   const [formData, setFormData] = useState<PetData>({
     name: '',
     birth: new Date(),
     breed: '',
     gender: true,
-    isNeutered: false,
+    neutered: false,
     disease: '',
   });
 
@@ -49,7 +49,7 @@ const EditPet = ({ route, navigation }) => {
       birth: birthDate,
       breed: pet.breed,
       gender: pet.gender,
-      isNeutered: pet.isNeutered,
+      neutered: pet.neutered,
       disease: pet.disease,
     });
   }, [pet]);
@@ -199,25 +199,25 @@ const EditPet = ({ route, navigation }) => {
                   <TouchableOpacity
                     style={[
                       styles.radioButton,
-                      formData.isNeutered && styles.radioButtonSelected,
+                      formData.neutered && styles.radioButtonSelected,
                     ]}
-                    onPress={() => setFormData(prev => ({ ...prev, isNeutered: true }))}
+                    onPress={() => setFormData(prev => ({ ...prev, neutered: true }))}
                   >
                     <Text style={[
                       styles.radioButtonText,
-                      formData.isNeutered && styles.radioButtonTextSelected,
+                      formData.neutered && styles.radioButtonTextSelected,
                     ]}>예</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[
                       styles.radioButton,
-                      !formData.isNeutered && styles.radioButtonSelected,
+                      !formData.neutered && styles.radioButtonSelected,
                     ]}
-                    onPress={() => setFormData(prev => ({ ...prev, isNeutered: false }))}
+                    onPress={() => setFormData(prev => ({ ...prev, neutered: false }))}
                   >
                     <Text style={[
                       styles.radioButtonText,
-                      !formData.isNeutered && styles.radioButtonTextSelected,
+                      !formData.neutered && styles.radioButtonTextSelected,
                     ]}>아니오</Text>
                   </TouchableOpacity>
                 </View>

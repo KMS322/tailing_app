@@ -28,6 +28,12 @@ const NavigationBar: React.FC = () => {
       >
         <Text style={styles.buttonText}>데이터목록</Text>
       </Pressable>
+      <Pressable 
+        style={styles.button}
+        onPress={() => navigation.navigate('Mypage')}
+      >
+        <Text style={styles.buttonText}>마이페이지</Text>
+      </Pressable>
       {/* <Pressable 
         style={styles.button}
         onPress={() => navigation.navigate('PetList')}

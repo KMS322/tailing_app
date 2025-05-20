@@ -10,7 +10,7 @@ export interface Pet {
   birth: string;
   breed: string;
   gender: boolean;  
-  isNeutered: boolean;
+  neutered: boolean;
   disease: string;
 }
 
@@ -19,7 +19,7 @@ interface PetFormData {
   birth: string;
   breed: string;
   gender: boolean;
-  isNeutered: boolean;
+  neutered: boolean;
   disease: string;
   device_code: string;
 }
@@ -60,7 +60,6 @@ export const userStore = create<UserStore>((set, get) => ({
       }
 
       const response = await axios.post(`${API_URL}/pet/load`, {
-        // device_code: 'DEVICE001'
         device_code: token.device_code
       });
 

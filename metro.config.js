@@ -33,7 +33,6 @@ module.exports = {
       /.*\.zip/,
       /.*\.tar/,
       /.*\.gz/,
-      /.*\.mp4/,
       /.*\.mov/,
       /.*\.avi/,
       /.*\.pdf/,

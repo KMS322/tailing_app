@@ -11,7 +11,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import Header from './header';
+import HeaderSignup from './headerSignup';
 import AlertModal from '../Component/modal/alertModal';
 import axios from 'axios';
 import { API_URL } from './constant/contants';
@@ -22,7 +22,6 @@ import { deviceStore } from '../store/deviceStore';
 type RootStackParamList = {
   Login: undefined;
   Sign: undefined;
-  // ... other screens
 };
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -60,7 +59,7 @@ const SignUp = () => {
   const [openAlertModal, setOpenAlertModal] = useState(false);
   const [modalContent, setModalContent] = useState({ title: '', content: '' });
   const navigation = useNavigation<NavigationProp>();
-  const { checkCode, checkLoading, checkError } = deviceStore();
+  const { checkCode,  checkError, checkSuccess, signup, signupSuccess, signupError } = deviceStore();
 
   // 전화번호 포맷팅 함수
   const formatPhoneNumber = (text: string) => {
@@ -80,7 +79,6 @@ const SignUp = () => {
     }
 
     try {
-      console.log("aaformData.deviceCode : ", formData.deviceCode);
       await checkCode(formData.deviceCode);
       setErrors(prev => ({ ...prev, deviceCode: undefined }));
       setIsDeviceCodeChecked(true);
@@ -105,17 +103,10 @@ const SignUp = () => {
       return;
     }
 
-    // if (formData.org_id.length < 4) {
-    //   setErrors(prev => ({ ...prev, org_id: '아이디는 4자 이상이어야 합니다.' }));
-    //   return;
-    // }
-
     try {
-      // TODO: 실제 API 호출로 대체
       const response = await axios.post(`${API_URL}/user/checkId`, {
         org_id : formData.org_id})
 
-      // const data = await response.json();
       if (response.status === 400) {
         setErrors(prev => ({ ...prev, org_id: '이미 사용 중인 아이디입니다.' }));
         setIsIdChecked(false);
@@ -194,17 +185,16 @@ const SignUp = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // 회원가입 제출
   const handleSubmit = async () => {
-    // if (!validateForm()) {
-    //   return;
-    // }
+    if (!validateForm()) {
+      return;
+    }
 
     try {
-      const response = await axios.post(`${API_URL}/user/signup`, formData);
-
-      console.log("response : ", response);
-      if(response.status === 201) {
+      await signup(formData);
+  
+      // 성공 시
+      if (signupSuccess) {
         Alert.alert(
           "회원 가입 완료",
           "로그인 화면으로 이동합니다.",
@@ -216,16 +206,19 @@ const SignUp = () => {
           ]
         );
       }
-     
     } catch (error) {
-      console.error("error : ", error);
-      Alert.alert('오류', '회원가입 중 오류가 발생했습니다.');
+      // 에러 메시지 처리
+      if (signupError) {
+        Alert.alert('오류', signupError);
+      } else {
+        Alert.alert('오류', '회원가입 중 오류가 발생했습니다.');
+      }
     }
   };
 
   return (
     <>
-      <Header title="회원가입" />
+      <HeaderSignup title="회원가입" />
       <SafeAreaView style={styles.container}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -237,17 +230,19 @@ const SignUp = () => {
                 <Text style={styles.deviceLabel}>디바이스 코드</Text>
                 <View style={styles.idContainer}>
                   <TextInput
-                    style={[styles.input, styles.idInput]}
+                    style={[styles.input, styles.idInput, {backgroundColor : !checkSuccess ? '#FFFFFF' : '#f5f5f5'}]}
                     value={formData.deviceCode}
                     onChangeText={(text) => {
                       setFormData(prev => ({ ...prev, deviceCode: text }));
                       setIsDeviceCodeChecked(false);
                     }}
                     placeholder="디바이스 코드를 입력하세요"
+                    editable={!checkSuccess}
                   />
                   <TouchableOpacity
-                    style={styles.checkButton}
+                    style={[styles.checkButton, {backgroundColor : !checkSuccess ? '#F0663F' : '#bdbdbd'}]}
                     onPress={checkDeviceCode}
+                    disabled={checkSuccess}
                   >
                     <Text style={styles.checkButtonText}>확인</Text>
                   </TouchableOpacity>
@@ -256,17 +251,18 @@ const SignUp = () => {
                   <Text style={styles.errorText}>{errors.deviceCode}</Text>
                 )}
               </View>
-
+               {!checkSuccess && <Text style={{color : '#F0663F', marginBottom : 12, fontWeight:'bold'}}>코드 확인이 완료되면 아래 입력칸이 활성화됩니다.</Text>} 
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>기관 이름</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, {backgroundColor : checkSuccess ? '#FFFFFF' : '#f5f5f5'}]}
                   value={formData.org_name}
                   onChangeText={(text) => {
                     setFormData(prev => ({ ...prev, org_name: text }));
                     setErrors(prev => ({ ...prev, org_name: undefined }));
                   }}
                   placeholder="기관 이름을 입력하세요"
+                  editable={checkSuccess}
                 />
                 {errors.org_name && (
                   <Text style={styles.errorText}>{errors.org_name}</Text>
@@ -276,13 +272,14 @@ const SignUp = () => {
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>기관 주소</Text>
                 <TextInput
-                  style={styles.input}
+                 style={[styles.input, {backgroundColor : checkSuccess ? '#FFFFFF' : '#f5f5f5'}]}
                   value={formData.org_address}
                   onChangeText={(text) => {
                     setFormData(prev => ({ ...prev, org_address: text }));
                     setErrors(prev => ({ ...prev, org_address: undefined }));
                   }}
                   placeholder="기관 주소를 입력하세요"
+                  editable={checkSuccess}
                 />
                 {errors.org_address && (
                   <Text style={styles.errorText}>{errors.org_address}</Text>
@@ -293,7 +290,7 @@ const SignUp = () => {
                 <Text style={styles.label}>아이디</Text>
                 <View style={styles.idContainer}>
                   <TextInput
-                    style={[styles.input, styles.idInput]}
+                    style={[styles.input, styles.idInput, {backgroundColor : checkSuccess && !isIdChecked ? '#FFFFFF' : '#f5f5f5'}]}
                     value={formData.org_id}
                     onChangeText={(text) => {
                       setFormData(prev => ({ ...prev, org_id: text }));
@@ -301,10 +298,16 @@ const SignUp = () => {
                       setIsIdChecked(false);
                     }}
                     placeholder="아이디를 입력하세요"
+                    editable={checkSuccess && !isIdChecked}
                   />
                   <TouchableOpacity
-                    style={styles.checkButton}
-                    onPress={checkIdDuplication}
+                    style={[styles.checkButton, {backgroundColor : checkSuccess && !isIdChecked ? '#F0663F' : '#bdbdbd'}]}
+                    disabled={ !checkSuccess }
+                    onPress={() => {
+                      if(checkSuccess) {
+                      checkIdDuplication();
+                    }
+                    }}
                   >
                     <Text style={styles.checkButtonText}>중복확인</Text>
                   </TouchableOpacity>
@@ -317,7 +320,7 @@ const SignUp = () => {
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>비밀번호</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, {backgroundColor : checkSuccess ? '#FFFFFF' : '#f5f5f5'}]}
                   value={formData.org_pw}
                   onChangeText={(text) => {
                     setFormData(prev => ({ ...prev, org_pw: text }));
@@ -325,6 +328,7 @@ const SignUp = () => {
                   }}
                   placeholder="비밀번호를 입력하세요"
                   secureTextEntry
+                  editable={checkSuccess}
                 />
                 {errors.org_pw && (
                   <Text style={styles.errorText}>{errors.org_pw}</Text>
@@ -334,7 +338,7 @@ const SignUp = () => {
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>비밀번호 확인</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, {backgroundColor : checkSuccess ? '#FFFFFF' : '#f5f5f5'}]}
                   value={formData.confirmPassword}
                   onChangeText={(text) => {
                     setFormData(prev => ({ ...prev, confirmPassword: text }));
@@ -342,6 +346,7 @@ const SignUp = () => {
                   }}
                   placeholder="비밀번호를 다시 입력하세요"
                   secureTextEntry
+                  editable={checkSuccess}
                 />
                 {errors.confirmPassword && (
                   <Text style={styles.errorText}>{errors.confirmPassword}</Text>
@@ -351,7 +356,7 @@ const SignUp = () => {
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>담당자 전화번호</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, {backgroundColor : checkSuccess ? '#FFFFFF' : '#f5f5f5'}]}
                   value={formData.org_phone}
                   onChangeText={(text) => {
                     const formatted = formatPhoneNumber(text);
@@ -361,6 +366,7 @@ const SignUp = () => {
                   placeholder="010-0000-0000"
                   keyboardType="phone-pad"
                   maxLength={13}
+                  editable={checkSuccess}
                 />
                 {errors.org_phone && (
                   <Text style={styles.errorText}>{errors.org_phone}</Text>
@@ -370,7 +376,7 @@ const SignUp = () => {
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>담당자 이메일</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, {backgroundColor : checkSuccess ? '#FFFFFF' : '#f5f5f5'}]}
                   value={formData.org_email}
                   onChangeText={(text) => {
                     setFormData(prev => ({ ...prev, org_email: text }));
@@ -379,6 +385,7 @@ const SignUp = () => {
                   placeholder="이메일을 입력하세요"
                   keyboardType="email-address"
                   autoCapitalize="none"
+                  editable={checkSuccess}
                 />
                 {errors.org_email && (
                   <Text style={styles.errorText}>{errors.org_email}</Text>

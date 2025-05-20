@@ -17,6 +17,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import BleManager from 'react-native-ble-manager';
 import { NativeEventEmitter, NativeModules } from 'react-native';
 import MessageModal from './modal/messageModal';
+import AlertModal from "./modal/alertModal";
 import { Buffer } from 'buffer';
 import { useBLE } from './BLEContext';
 import dayjs from 'dayjs';
@@ -68,6 +69,7 @@ const ConnectBle = ({ route }: Props) => {
   const [isConnected, setIsConnected] = useState(false);
   const [peripherals, setPeripherals] = useState(new Map());
   const [openMessageModal, setOpenMessageModal] = useState(false);
+  const [openAlertModal, setOpenAlertModal] = useState(false);
   const [modalContent, setModalContent] = useState({ title: '', content: '' });
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [lastUpdateTime, setLastUpdateTime] = useState(Date.now());
@@ -327,9 +329,13 @@ const ConnectBle = ({ route }: Props) => {
   };
 
   const handleMonitoring = () => {
-    navigation.navigate('Dashboard', {
-      selectedPet,
-    });
+    if(!isConnected) {
+      setOpenAlertModal(true);
+    } else {
+      navigation.navigate('Dashboard', {
+        selectedPet,
+      });
+    }
       // navigation.navigate('Dashboard');
     
   };
@@ -384,6 +390,15 @@ const ConnectBle = ({ route }: Props) => {
         >
           <Text style={styles.buttonText}>모니터링 하기</Text>
         </Pressable>
+        {/* <Pressable
+          style={({ pressed }) => [
+            styles.monitoringButton,
+            pressed && styles.pressedButton
+          ]}
+          onPress={handleMonitoring}
+        >
+          <Text style={styles.buttonText}>{isConnected ? '연결 중' : '연결 안중'}</Text>
+        </Pressable> */}
       </SafeAreaView>
       <NavigationBar />
       <MessageModal
@@ -391,6 +406,12 @@ const ConnectBle = ({ route }: Props) => {
         title={modalContent.title}
         content={modalContent.content}
         onClose={() => setOpenMessageModal(false)}
+      />  
+      <AlertModal
+        visible={openAlertModal}
+        title="연결 오류"
+        content="디바이스와의 연결을 확인해주세요."
+        onClose={() => setOpenAlertModal(false)}
       />
     </>
   );
