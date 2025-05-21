@@ -11,6 +11,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import ConfirmModal from "../Component/modal/confirmModal";
 import MessageModal from "../Component/modal/messageModal";
+import AlertModal from "../Component/modal/alertModal";
 import { orgStore } from '../store/orgStore';
 
 type RootStackParamList = {
@@ -35,7 +36,16 @@ const MypageChangePW = ({ visible, onClose, org_id }: MypageChangePWProps) => {
   });
   const [openConfirmModal, setOpenConfirmModal] = useState(false);
   const [openMessageModal, setOpenMessageModal] = useState(false);
-  const { changePW, changePWSuccess, logout } = orgStore();
+  const [openAlertModal, setOpenAlertModal] = useState(false);
+  const [modalContent, setModalContent] = useState({ title: '', content: '' });
+  const { 
+    changePW, 
+    changePWSuccess, 
+    changePWError,
+    offChangePWSuccess,
+    offChangePWError,
+    logout 
+  } = orgStore();
 
   const handleLogout = async () => {
     try {
@@ -51,8 +61,11 @@ const MypageChangePW = ({ visible, onClose, org_id }: MypageChangePWProps) => {
 
   const handleSubmit = async () => {
     try {
-      const sendData = { org_pw : formData.currentPassword, org_new_pw : formData.newPassword };
-      await changePW(sendData); 
+      const sendData = { 
+        org_pw: formData.currentPassword, 
+        org_new_pw: formData.newPassword 
+      };
+      await changePW(sendData);
     } catch(e) {
       console.error(e);
     }
@@ -60,23 +73,40 @@ const MypageChangePW = ({ visible, onClose, org_id }: MypageChangePWProps) => {
 
   useEffect(() => {
     if(changePWSuccess) {
+      setOpenConfirmModal(false);
+      setModalContent({
+        title: "비밀번호 변경 완료",
+        content: "다시 로그인 해주세요."
+      });
       setOpenMessageModal(true);
+      offChangePWSuccess();
       const handleLogoutAndNavigate = async () => {
         try {
           await logout();
-          setTimeout(() => {
-            navigation.reset({
-              index: 0,
-              routes: [{ name: 'Login' }],
-            });
-          }, 1500); // 메시지 모달이 표시되는 시간과 동일하게 설정
+          await new Promise(resolve => setTimeout(resolve, 1500));
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'Login' }],
+          });
         } catch (error) {
           console.error('Logout failed:', error);
         }
       };
       handleLogoutAndNavigate();
     }
-  }, [changePWSuccess])
+  }, [changePWSuccess]);
+
+  useEffect(() => {
+    if(changePWError) {
+      setOpenConfirmModal(false);
+      setModalContent({
+        title: "오류",
+        content: changePWError
+      });
+      setOpenAlertModal(true);
+      offChangePWError();
+    }
+  }, [changePWError]);
 
   return (
     <Modal
@@ -146,6 +176,12 @@ const MypageChangePW = ({ visible, onClose, org_id }: MypageChangePWProps) => {
           </View>
         </View>
       </View>
+      <AlertModal
+        visible={openAlertModal}
+        title={modalContent.title}
+        content={modalContent.content}
+        onClose={() => setOpenAlertModal(false)}
+      />
       <ConfirmModal
         visible={openConfirmModal}
         title="비밀번호 변경"
@@ -157,8 +193,8 @@ const MypageChangePW = ({ visible, onClose, org_id }: MypageChangePWProps) => {
       />
       <MessageModal
         visible={openMessageModal}
-        title="비밀번호 변경 완료"
-        content="다시 로그인 해주세요."
+        title={modalContent.title}
+        content={modalContent.content}
         onClose={() => setOpenMessageModal(false)}
       />
     </Modal>

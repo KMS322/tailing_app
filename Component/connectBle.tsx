@@ -8,7 +8,6 @@ import {
   SafeAreaView,
   Platform,
   PermissionsAndroid,
-  Alert,
 } from 'react-native';
 import { useNavigation, RouteProp } from '@react-navigation/native';
 import Header from './header';
@@ -332,7 +331,7 @@ const ConnectBle = ({ route }: Props) => {
     if(!isConnected) {
       setOpenAlertModal(true);
     } else {
-      navigation.navigate('Dashboard', {
+      navigation.push('Dashboard', {
         selectedPet,
       });
     }

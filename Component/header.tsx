@@ -1,26 +1,59 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet, Image, Modal, TouchableWithoutFeedback } from 'react-native';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { orgStore } from '../store/orgStore';
+import AlertModal from './modal/alertModal';
+import MessageModal from './modal/messageModal';
 
 interface HeaderProps {
   title: string;
 }
 
-
 const Header: React.FC<HeaderProps> = ({ title }) => {
   const navigation = useNavigation<NavigationProp<any>>();
   const [menuVisible, setMenuVisible] = useState(false);
-  const { logout } = orgStore();
+  const { logout, logoutSuccess, logoutError, offLogoutSuccess, offLogoutError } = orgStore();
+  const [openAlertModal, setOpenAlertModal] = useState<boolean>(false);
+  const [openMessageModal, setOpenMessageModal] = useState<boolean>(false);
+  const [modalContent, setModalContent] = useState({ title: '', content: '' });
+
+  useEffect(() => {
+    if (logoutSuccess) {
+      setMenuVisible(false);
+      setModalContent({
+        title: "로그아웃",
+        content: "정상적으로 로그아웃 되었습니다."
+      });
+      setOpenMessageModal(true);
+      offLogoutSuccess();
+      setTimeout(() => {
+        navigation.navigate('Login');
+      }, 1500);
+    }
+  }, [logoutSuccess]);
+
+  useEffect(() => {
+    if (logoutError) {
+      setMenuVisible(false);
+      setModalContent({
+        title: "오류",
+        content: logoutError
+      });
+      setOpenAlertModal(true);
+      offLogoutError();
+    }
+  }, [logoutError]);
 
   const handleLogout = async() => {
     try {
       await logout();
-      navigation.navigate('Login');
     } catch (error) {
       console.error(error);
     }
   }
+  
+  const state = navigation.getState();
+  const previousRoute = state.routes[state.index - 1];
 
   return (
     <View style={styles.header}>
@@ -29,7 +62,17 @@ const Header: React.FC<HeaderProps> = ({ title }) => {
           styles.backButton,
           pressed && styles.pressedButton
         ]}
-        onPress={() => navigation.goBack()}
+        onPress={() => {
+          if(previousRoute.name === "Login"){
+            setModalContent({
+              title: "오류",
+              content: "로그인 화면으로 가고자 한다면 로그아웃을 해주세요."
+            });
+            setOpenAlertModal(true);
+          } else {
+            navigation.goBack()
+          }
+        }}
       >
         <Image 
           source={require('../assets/images/arrow_left.png')}
@@ -56,6 +99,18 @@ const Header: React.FC<HeaderProps> = ({ title }) => {
           </Pressable>
         </View>
       </Modal>
+      <AlertModal
+        visible={openAlertModal}
+        onClose={() => setOpenAlertModal(false)}
+        title={modalContent.title}
+        content={modalContent.content}
+      />
+      <MessageModal
+        visible={openMessageModal}
+        onClose={() => setOpenMessageModal(false)}
+        title={modalContent.title}
+        content={modalContent.content}
+      />
     </View>
   );
 };

@@ -40,6 +40,8 @@ interface DataStore {
     }) => Promise<void>;
     downCSV: (file_name: string, label: string) => Promise<void>;
     resetDownCsvSuccess: () => void;
+    offDownCsvSuccess: () => void;
+    offDownCsvError: () => void;
 }
 
 export const dataStore = create<DataStore>((set, get) => ({
@@ -115,8 +117,7 @@ export const dataStore = create<DataStore>((set, get) => ({
   },
   downCSV: async(file_name: string, label: string) => {
     try {
-      set({downCsvLoading: true, downCsvError: null});
-      
+      set({downCsvLoading: true, downCsvError: null, downCsvSuccess: false});
       const date_time = file_name.split("_")[2].replace(/\.csv$/i, "");
       const extIndex = file_name.lastIndexOf(".");
       const ext = extIndex !== -1 ? file_name.substring(extIndex) : ".csv";
@@ -135,13 +136,19 @@ export const dataStore = create<DataStore>((set, get) => ({
         data: { filename: file_name },
         responseType: 'text'
       });
-      // 파일 저장
-      await RNFS.writeFile(downloadPath, response.data, 'utf8');
       
+      await RNFS.writeFile(downloadPath, response.data, 'utf8');
       set({downCsvSuccess: true, downCsvLoading: false, downCsvError: null});
     } catch (error) {
-      set({downCsvError: error instanceof Error ? error.message : 'CSV 다운로드에 실패했습니다.', downCsvLoading: false});
+      set({
+        downCsvError: error instanceof Error ? error.message : 'CSV 다운로드에 실패했습니다.',
+        downCsvLoading: false,
+        downCsvSuccess: false
+      });
+      throw error;
     }
   },
   resetDownCsvSuccess: () => set({ downCsvSuccess: false }),
+  offDownCsvSuccess: () => set({ downCsvSuccess: false }),
+  offDownCsvError: () => set({ downCsvError: null })
 }))

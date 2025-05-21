@@ -16,13 +16,24 @@ dayjs.extend(customParseFormat);
 
 const RecordLists = ({selectedDate, selectedPetCode, label}: {selectedDate: string, selectedPetCode: string, label: string}) => {
   const [openAlertModal, setOpenAlertModal] = useState(false);
-  const { csvLists, downCSV, downCsvSuccess, resetDownCsvSuccess } = dataStore();
+  const [alertTitle, setAlertTitle] = useState('');
+  const [alertContent, setAlertContent] = useState('');
+  const { 
+    csvLists, 
+    downCSV, 
+    downCsvSuccess, 
+    downCsvError,
+    offDownCsvSuccess,
+    offDownCsvError 
+  } = dataStore();
+
   const date_time = csvLists.map((list)=> list.file_name.split("_")[2].split(".")[0].split("-"));
   const dates = date_time.map((list)=> list[0]);
   const times = date_time.map((list)=> list[1]);
   const formattedTimes = times.map(time => 
     dayjs(time, "HHmmss").format("HH:mm:ss")
   );
+
   const handleDownload = async(list) => {
     try {
       await downCSV(list.file_name, label);
@@ -33,10 +44,21 @@ const RecordLists = ({selectedDate, selectedPetCode, label}: {selectedDate: stri
 
   useEffect(() => {
     if (downCsvSuccess) {
-      setOpenAlertModal(true);  
-      resetDownCsvSuccess();
+      setAlertTitle("다운로드 완료");
+      setAlertContent("Downloads 폴더에서 확인하세요.");
+      setOpenAlertModal(true);
+      offDownCsvSuccess();
     }
-  }, [downCsvSuccess])
+  }, [downCsvSuccess]);
+
+  useEffect(() => {
+    if (downCsvError) {
+      setAlertTitle("다운로드 실패");
+      setAlertContent(downCsvError);
+      setOpenAlertModal(true);
+      offDownCsvError();
+    }
+  }, [downCsvError]);
 
   return (
     <>
@@ -50,20 +72,20 @@ const RecordLists = ({selectedDate, selectedPetCode, label}: {selectedDate: stri
             >
               <View style={styles.listInfo}>
                 <Text style={styles.listDate}>수집 시작 일시 : {dayjs(dates[index]).format('YYYY-MM-DD')} {formattedTimes[index]}</Text>
-                <TouchableOpacity style={styles.downloadButton} onPress={() => handleDownload(list)}><Text>다운로드</Text></TouchableOpacity>
+                <TouchableOpacity style={styles.downloadButton} onPress={() => handleDownload(list)}>
+                  <Text>다운로드</Text>
+                </TouchableOpacity>
               </View>
             </View>
           ))}
-    
-   
         </View>
       </ScrollView>
     </ScrollView>
     <AlertModal
       visible={openAlertModal}
       onClose={() => setOpenAlertModal(false)}
-      title="다운로드 완료"
-      content="Downloads 폴더에서 확인하세요."
+      title={alertTitle}
+      content={alertContent}
     />
     </>
   )
@@ -72,8 +94,6 @@ const RecordLists = ({selectedDate, selectedPetCode, label}: {selectedDate: stri
 const styles = StyleSheet.create({
   container: {
     backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: 'red',
   },
   scrollView: {
     width: '100%',
@@ -119,6 +139,11 @@ const styles = StyleSheet.create({
   listDate: {
     fontSize: 14,
     color: '#666',
+  },
+  downloadButton: {
+    backgroundColor: '#f0f0f0',
+    padding: 8,
+    borderRadius: 4,
   },
   downloadIcon: {
     width: 24,

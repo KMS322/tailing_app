@@ -6,7 +6,6 @@ import {
   View,
   TextInput,
   TouchableOpacity,
-  Alert,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
@@ -63,7 +62,16 @@ const Mypage = () => {
   const [openMessageModal, setOpenMessageModal] = useState(false);
   const [modalContent, setModalContent] = useState({ title: '', content: '' });
   const navigation = useNavigation<NavigationProp>();
-  const { org, loadOrg, changeInfo, changeInfoLoading, changeInfoError, changeInfoSuccess } = orgStore();
+  const { 
+    org, 
+    loadOrg, 
+    changeInfo, 
+    changeInfoLoading, 
+    changeInfoError, 
+    changeInfoSuccess,
+    offChangeInfoSuccess,
+    offChangeInfoError
+  } = orgStore();
 
   useEffect(() => {
     loadOrg();
@@ -83,6 +91,30 @@ const Mypage = () => {
       });
     }
   }, [org]);
+
+  useEffect(() => {
+    if (changeInfoSuccess) {
+      setOpenConfirmModal(false);
+      setModalContent({
+        title: "정보 수정",
+        content: "정보가 수정되었습니다."
+      });
+      setOpenMessageModal(true);
+      offChangeInfoSuccess();
+    }
+  }, [changeInfoSuccess]);
+
+  useEffect(() => {
+    if (changeInfoError) {
+      setOpenConfirmModal(false);
+      setModalContent({
+        title: "오류",
+        content: changeInfoError
+      });
+      setOpenAlertModal(true);
+      offChangeInfoError();
+    }
+  }, [changeInfoError]);
 
   const formatPhoneNumber = (text: string) => {
     const cleaned = text.replace(/\D/g, '');
@@ -123,20 +155,17 @@ const Mypage = () => {
       return;
     }
     try {
-      const sendData = {org_name : formData.org_name, org_address : formData.org_address, org_phone : formData.org_phone, org_email : formData.org_email};
+      const sendData = {
+        org_name: formData.org_name, 
+        org_address: formData.org_address, 
+        org_phone: formData.org_phone, 
+        org_email: formData.org_email
+      };
       await changeInfo(sendData);
-     
     } catch (error) {
       console.error("error : ", error);
     }
   };
-
-  useEffect(() => {
-    if(changeInfoSuccess) {
-      setOpenConfirmModal(false);
-      setOpenMessageModal(true);
-    }
-  }, [changeInfoSuccess])
 
   return (
     <>
