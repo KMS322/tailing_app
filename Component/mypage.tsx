@@ -51,7 +51,7 @@ const Mypage = () => {
               </View>
               <View style={styles.cs_text_box}>
                 <Text style={styles.cs_text}>talktail@creamoff.co.kr</Text>
-                <Text style={styles.cs_text}>010-5685-3323</Text>
+                <Text style={styles.cs_text}>010-4898-5955</Text>
               </View>
           </View>
           <View style={styles.btn_container}>

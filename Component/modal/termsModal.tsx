@@ -13,12 +13,7 @@ type TermsModalProps = {
   visible: boolean;
   type: 'privacy' | 'terms' | 'agreement';
   onClose: () => void;
-  onAgree?: (agreementInfo: {
-    marketingAgreed: boolean;
-    smsAgreed: boolean;
-    emailAgreed: boolean;
-    pushAgreed: boolean;
-  }) => void;
+  onAgree?: () => void;
 };
 
 const TermsModal = ({ visible, type, onClose, onAgree }: TermsModalProps) => {
@@ -66,74 +61,93 @@ const TermsModal = ({ visible, type, onClose, onAgree }: TermsModalProps) => {
   const marketingPolicy = `마케팅 목적의 개인정보 수집 및 이용 동의
 
 1. 수집하는 개인정보 항목
-- 필수항목: 아이디, 비밀번호, 이메일 주소
-- 선택항목: 전화번호, 반려동물 정보
 
-2. 개인정보의 수집 및 이용목적
-- 신규 서비스 개발 및 마케팅
-- 이벤트 및 프로모션 안내
-- 서비스 이용에 대한 통계 분석
-- 맞춤형 서비스 제공
+- 필수항목: 디바이스 코드, 기관명, 기관 주소, 아이디, 비밀번호, 담당자 이메일, 담당자 연락처
+- 동물 등록 정보 (필수): 환자명, 생년월일, 체중, 성별, 종, 품종, 중성화 여부, 진단명
+- 선택항목: 입원일자, 주치의, 과거병력
 
-3. 개인정보의 보유 및 이용기간
-- 회원 탈퇴 시까지 또는 동의 철회 시까지
+2. 수집 및 이용 목적
 
-4. 동의 거부권 및 동의 거부에 따른 불이익
-- 동의를 거부하실 수 있으며, 동의 거부 시 마케팅 정보 수신이 제한됩니다.`;
+- Tailing 디바이스 기반 Talktail 솔루션의 안내 및 기능 업데이트
+- 기관 맞춤형 마케팅 및 프로모션 정보 제공
+- 기술 지원 및 서비스 개선을 위한 통계 분석
+- 제품 연구 개발을 위한 비식별화된 데이터 활용
+
+3. 보유 및 이용 기간
+
+- 회원 탈퇴 또는 동의 철회 시까지 보유
+- 단, 관련 법령에 따라 보존이 필요한 경우 해당 기간 동안 보유
+
+4. 동의 거부 시 불이익 안내
+
+- 동의를 거부하셔도 서비스 이용에는 제한이 없으며, 마케팅 및 프로모션 정보 제공이 제한됩니다.`;
 
   const privacyPolicy = `1. 수집하는 개인정보 항목
-- 필수항목: 아이디, 비밀번호, 이메일 주소
-- 선택항목: 반려동물 정보 (이름, 종류, 생년월일 등)
 
-2. 개인정보의 수집 및 이용목적
-- 회원 가입 및 관리
-- 서비스 제공 및 운영
-- 반려동물 건강 모니터링 서비스 제공
-- 고객 문의 및 불만 처리
+- 회원가입 시 필수: 디바이스 코드, 기관명, 기관 주소, 아이디, 비밀번호, 담당자 이메일, 담당자 연락처
+- 반려동물 등록 시 필수: 환자명, 생년월일, 체중, 성별, 종, 품종, 중성화 여부, 진단명
+- 선택항목: 입원일자, 주치의, 과거병력
 
-3. 개인정보의 보유 및 이용기간
-- 회원 탈퇴 시까지 또는 법정 보유기간
+2. 개인정보 수집 및 이용 목적
 
-4. 개인정보의 제3자 제공
-- 법령에 따른 규정이나 수사 목적으로 법령에 정해진 절차와 방법에 따라 수사기관의 요구가 있는 경우
+- 사용자 인증 및 기기 연동을 통한 서비스 제공
+- 환자 생체신호 기반 건강 분석 및 리포트 생성
+- 기술 지원, 고객 상담, 문제 해결
+- 법적 의무 이행 및 통계 활용
 
-5. 이용자의 권리와 행사방법
-- 개인정보 열람 요구
-- 오류 정정 요구
-- 삭제 요구
-- 처리정지 요구
+3. 보유 및 이용 기간
+
+- 회원 탈퇴 시까지 또는 관련 법령에 따라 보존
+
+4. 제3자 제공
+
+- 법령에 따라 수사기관 등의 요청이 있을 경우에 한해 제공
+
+5. 이용자의 권리
+
+- 열람, 정정, 삭제, 처리정지 요청 가능
+- 요청은 talktail@creamoff.co.kr 로 접수
 
 6. 개인정보 보호책임자
-- 이름: 홍길동
-- 직위: 개인정보보호책임자
-- 연락처: privacy@creamoff.com`;
 
-  const termsOfService = `1. 서비스 이용
-- 본 서비스는 회원 가입 후 이용 가능합니다.
-- 서비스 이용은 24시간 가능하며, 시스템 점검 등으로 일시 중단될 수 있습니다.
+- 이름: 권도혁
+- 직위: 대표자
+- 이메일: talktail@creamoff.co.kr`;
 
-2. 회원의 의무
-- 회원은 본인의 개인정보를 정확하게 제공해야 합니다.
-- 회원은 서비스 이용 시 관련 법령을 준수해야 합니다.
-- 회원은 서비스의 정상적인 운영을 방해하는 행위를 해서는 안 됩니다.
+  const termsOfService = `1. 서비스 개요
 
-3. 서비스 제공
-- 반려동물 건강 모니터링 서비스
-- 건강 데이터 분석 및 리포트 제공
-- 커뮤니티 서비스
+- Talktail은 Tailing 디바이스를 기반으로 반려동물의 IR, RED, SpO₂, 심박수, 체온 등의 생체 데이터를 측정 및 분석하여 동물병원 및 관련 기관에 건강 리포트를 제공하는 모니터링 솔루션입니다.
 
-4. 서비스 이용 제한
-- 법령 및 약관을 위반하는 경우
-- 서비스의 정상적인 운영을 방해하는 경우
-- 타인의 권리를 침해하는 경우
+2. 서비스 이용 대상
 
-5. 책임 제한
-- 천재지변, 전쟁, 기간통신사업자의 서비스 중지 등으로 인한 서비스 중단
-- 회원의 귀책사유로 인한 서비스 이용 장애
+- 동물병원, 수의과 대학, 연구기관 등 등록된 기관 사용자
 
-6. 분쟁 해결
-- 본 약관과 관련하여 분쟁이 발생할 경우, 회사와 회원은 상호 협의하여 해결합니다.
-- 협의가 이루어지지 않을 경우, 관련 법령에 따라 해결합니다.`;
+3. 회원의 의무
+
+- 기관 및 환자 정보를 정확히 입력
+- 시스템 무단 접근, 정보 조작, 허위 등록 등 금지
+- 법령 및 본 약관 준수
+
+4. 제공 서비스
+
+- 디바이스 연동 데이터 측정 및 분석 리포트
+- 환자 건강 이력 관리 기능
+- 기관 전용 기술지원, 통계 기능 제공
+
+5. 서비스 이용 제한
+
+- 본 약관 위반 또는 부정 행위 발생 시
+- 법령 위반, 계정 도용, 비인가 기기 사용 등
+
+6. 면책 조항
+
+- 천재지변, 네트워크 장애 등 불가항력 사유
+- 사용자 과실에 의한 서비스 장애
+
+7. 분쟁 해결
+
+- 본 약관에 따른 분쟁은 원칙적으로 상호 협의로 해결합니다.
+- 협의가 이루어지지 않을 경우 대구지방법원 경산시법원을 관할 법원으로 합니다.`;
 
   const renderAgreementContent = () => {
     if (type !== 'agreement') {
@@ -158,7 +172,7 @@ const TermsModal = ({ visible, type, onClose, onAgree }: TermsModalProps) => {
             </View>
             {showPrivacyFull && (
               <View style={styles.agreementScrollView}>
-                <ScrollView nestedScrollEnabled={true} style={{maxHeight: 200}}>
+                <ScrollView nestedScrollEnabled={true} style={{ maxHeight: 200 }}>
                   <Text style={styles.fullTextTitle}>크림오프 개인정보 처리방침</Text>
                   <Text style={styles.content}>{privacyPolicy}</Text>
                 </ScrollView>
@@ -184,7 +198,7 @@ const TermsModal = ({ visible, type, onClose, onAgree }: TermsModalProps) => {
             </View>
             {showTermsFull && (
               <View style={styles.agreementScrollView}>
-                <ScrollView nestedScrollEnabled={true} style={{maxHeight: 200}}>
+                <ScrollView nestedScrollEnabled={true} style={{ maxHeight: 200 }}>
                   <Text style={styles.fullTextTitle}>크림오프 이용약관</Text>
                   <Text style={styles.content}>{termsOfService}</Text>
                 </ScrollView>
@@ -210,7 +224,7 @@ const TermsModal = ({ visible, type, onClose, onAgree }: TermsModalProps) => {
             </View>
             {showMarketingFull && (
               <View style={styles.agreementScrollView}>
-                <ScrollView nestedScrollEnabled={true} style={{maxHeight: 200}}>
+                <ScrollView nestedScrollEnabled={true} style={{ maxHeight: 200 }}>
                   <Text style={styles.content}>{marketingPolicy}</Text>
                 </ScrollView>
               </View>
@@ -271,16 +285,7 @@ const TermsModal = ({ visible, type, onClose, onAgree }: TermsModalProps) => {
               styles.agreeButton,
               (!privacyAgreed || !termsAgreed) && styles.agreeButtonDisabled
             ]}
-            onPress={() => {
-              if (onAgree) {
-                onAgree({
-                  marketingAgreed,
-                  smsAgreed,
-                  emailAgreed,
-                  pushAgreed
-                });
-              }
-            }}
+            onPress={onAgree}
             disabled={!privacyAgreed || !termsAgreed}
           >
             <Text style={styles.agreeButtonText}>동의하고 계속하기</Text>
@@ -439,7 +444,7 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     marginTop: 20,
-    
+
   },
   allAgreeButton: {
     flexDirection: 'row',
@@ -447,7 +452,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     marginBottom: 15,
     padding: 10,
-    
+
   },
   allAgreeText: {
     fontSize: 16,
@@ -470,4 +475,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default TermsModal;
+export default TermsModal; 
