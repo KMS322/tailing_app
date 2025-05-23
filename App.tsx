@@ -14,15 +14,18 @@ import ConnectBle from './Component/connectBle';
 import EditPet from './Component/editPet';
 import Record from './Component/record';
 import Mypage from './Component/mypage';
+import MypageChangeInfo from './Component/mypageChangeInfo';
+import MypageChangePW from './Component/mypageChangePW';
+import { RootStackParamList } from './types/navigation';
 
-const Stack = createNativeStackNavigator();
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const App = () => {
   return (
     <BLEProvider>
       <NavigationContainer>
         <Stack.Navigator
-          initialRouteName="Intro"
+          initialRouteName="Login"
           screenOptions={{
             headerShown: false,
             contentStyle: {
@@ -33,7 +36,6 @@ const App = () => {
           <Stack.Screen name="Intro" component={Intro} />
           <Stack.Screen name="Login" component={Login} />
           <Stack.Screen name="SignUp" component={SignUp} />
-          <Stack.Screen name="Mypage" component={Mypage} />
           <Stack.Screen name="Dashboard" component={Dashboard} />
           <Stack.Screen name="DetailTemp" component={DetailTemp} />
           <Stack.Screen name="DetailHeart" component={DetailHeart} />
@@ -42,6 +44,9 @@ const App = () => {
           <Stack.Screen name="ConnectBle" component={ConnectBle} />
           <Stack.Screen name="EditPet" component={EditPet} />
           <Stack.Screen name="Record" component={Record} />
+          <Stack.Screen name="Mypage" component={Mypage} />
+          <Stack.Screen name="MypageChangeInfo" component={MypageChangeInfo} />
+          <Stack.Screen name="MypageChangePW" component={MypageChangePW} />
         </Stack.Navigator>
       </NavigationContainer>
     </BLEProvider>

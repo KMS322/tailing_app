@@ -123,6 +123,9 @@ const ConnectBle = ({ route }: Props) => {
         await handleAndroidPermissions();
       }
 
+      const state = await BleManager.checkState();
+
+      console.log("state : ", state);
       // 이미 스캔 중이면 중지
       if (isScanning) {
         BleManager.stopScan();
@@ -341,7 +344,7 @@ const ConnectBle = ({ route }: Props) => {
 
   return (
     <>
-      <Header title="블루투스 연결" />
+      <Header title="디바이스 연결" />
       <SafeAreaView style={styles.container}>
         <View style={styles.monitorBox}>
           <ScrollView 
@@ -377,7 +380,7 @@ const ConnectBle = ({ route }: Props) => {
           onPress={isConnected ? handleDisconnect : startScan}
         >
           <Text style={styles.buttonText}>
-            {isConnected ? '디바이스 연결 끊기' : (isScanning ? '탐색 중...' : '주변 기기 탐색')}
+            {isConnected ? '디바이스 연결 끊기' : (isScanning ? '찾는 중...' : '디바이스 찾기')}
           </Text>
         </Pressable>
         <Pressable

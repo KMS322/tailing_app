@@ -17,20 +17,24 @@ const Header: React.FC<HeaderProps> = ({ title }) => {
   const [openMessageModal, setOpenMessageModal] = useState<boolean>(false);
   const [modalContent, setModalContent] = useState({ title: '', content: '' });
 
-  useEffect(() => {
-    if (logoutSuccess) {
-      setMenuVisible(false);
-      setModalContent({
-        title: "로그아웃",
-        content: "정상적으로 로그아웃 되었습니다."
-      });
-      setOpenMessageModal(true);
-      offLogoutSuccess();
-      setTimeout(() => {
-        navigation.navigate('Login');
-      }, 1500);
-    }
-  }, [logoutSuccess]);
+  const state = navigation.getState();
+  const routes = state.routes;
+  const currentRoute = routes[state.index];
+
+  // useEffect(() => {
+  //   if (logoutSuccess) {
+  //     setMenuVisible(false);
+  //     setModalContent({
+  //       title: "로그아웃",
+  //       content: "정상적으로 로그아웃 되었습니다."
+  //     });
+  //     setOpenMessageModal(true);
+  //     offLogoutSuccess();
+  //     setTimeout(() => {
+  //       navigation.navigate('Login');
+  //     }, 1500);
+  //   }
+  // }, [logoutSuccess]);
 
   useEffect(() => {
     if (logoutError) {
@@ -44,16 +48,14 @@ const Header: React.FC<HeaderProps> = ({ title }) => {
     }
   }, [logoutError]);
 
-  const handleLogout = async() => {
-    try {
-      await logout();
-    } catch (error) {
-      console.error(error);
-    }
-  }
+  // const handleLogout = async() => {
+  //   try {
+  //     await logout();
+  //   } catch (error) {
+  //     console.error(error);
+  //   }
+  // }
   
-  const state = navigation.getState();
-  const previousRoute = state.routes[state.index - 1];
 
   return (
     <View style={styles.header}>
@@ -63,10 +65,10 @@ const Header: React.FC<HeaderProps> = ({ title }) => {
           pressed && styles.pressedButton
         ]}
         onPress={() => {
-          if(previousRoute.name === "Login"){
+          if(currentRoute.name === 'PetLists' && routes[state.index - 1]?.name === 'Login'){
             setModalContent({
-              title: "오류",
-              content: "로그인 화면으로 가고자 한다면 로그아웃을 해주세요."
+              title: "안내",
+              content: "마지막 페이지입니다."
             });
             setOpenAlertModal(true);
           } else {
@@ -80,11 +82,11 @@ const Header: React.FC<HeaderProps> = ({ title }) => {
         />
       </Pressable>
       <Text style={styles.title}>{title}</Text> 
-      <Pressable style={styles.rightButton} onPress={() => setMenuVisible(true)}>
+      {/* <Pressable style={styles.rightButton} onPress={() => setMenuVisible(true)}>
         <Text style={styles.right_btn_text}>⋮</Text>
-      </Pressable>
+      </Pressable> */}
       {/* 메뉴바 모달 */}
-      <Modal
+      {/* <Modal
         visible={menuVisible}
         transparent
         animationType="fade"
@@ -98,7 +100,7 @@ const Header: React.FC<HeaderProps> = ({ title }) => {
             <Text style={styles.menuText}>로그아웃</Text>
           </Pressable>
         </View>
-      </Modal>
+      </Modal> */}
       <AlertModal
         visible={openAlertModal}
         onClose={() => setOpenAlertModal(false)}
@@ -130,6 +132,9 @@ const styles = StyleSheet.create({
   backButton: {
     marginRight: 8,
     padding: 8,
+    position: 'absolute',
+    left: 16,
+    zIndex: 1,
   },
   pressedButton: {
     opacity: 0.7,
@@ -142,6 +147,10 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '400',
     color: '#FFF',
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    textAlign: 'center',
   },
   right_btn_text : {
     fontSize: 40,

@@ -25,6 +25,10 @@ interface DeviceStore {
     org_pw: string;
     org_phone: string;
     org_email: string;
+    marketingAgreed: boolean;
+    smsAgreed: boolean;
+    emailAgreed: boolean;
+    pushAgreed: boolean;
   }) => Promise<void>; 
   offSignupSuccess: () => void;
   offSignupError: () => void;
@@ -71,7 +75,19 @@ export const deviceStore = create<DeviceStore>((set, get) => ({
       throw new Error();
     }
   },
-  signup: async ({ deviceCode, org_name, org_address, org_id, org_pw, org_phone, org_email }) => {
+  signup: async ({ 
+    deviceCode, 
+    org_name, 
+    org_address, 
+    org_id, 
+    org_pw, 
+    org_phone, 
+    org_email,
+    marketingAgreed,
+    smsAgreed,
+    emailAgreed,
+    pushAgreed 
+  }) => {
     try {
       set({ signupLoading: true, signupError: null, signupSuccess: false });
       const response = await axios.post(`${API_URL}/user/signup`, {
@@ -81,7 +97,11 @@ export const deviceStore = create<DeviceStore>((set, get) => ({
         org_id,
         org_pw,
         org_phone,
-        org_email
+        org_email,
+        marketingAgreed,
+        smsAgreed,
+        emailAgreed,
+        pushAgreed
       });
       if (response.status === 201) {
         set({ signupLoading: false, signupError: null, signupSuccess: true, checkSuccess:false });
