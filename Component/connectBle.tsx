@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -62,17 +62,18 @@ const ConnectBle = ({ route }: Props) => {
   
   const { selectedPet } = route.params;
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { dispatch, addChartData, collectData } = useBLE();
+  const { dispatch, addChartData, collectData, state } = useBLE();
   const [isScanning, setIsScanning] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
   const [peripherals, setPeripherals] = useState(new Map());
   const [openMessageModal, setOpenMessageModal] = useState(false);
   const [openAlertModal, setOpenAlertModal] = useState(false);
   const [modalContent, setModalContent] = useState({ title: '', content: '' });
   const [isSubscribed, setIsSubscribed] = useState(false);
-  const [lastUpdateTime, setLastUpdateTime] = useState(Date.now());
   const [dataBuffer, setDataBuffer] = useState<number[]>([]);
+  const deviceFoundRef = useRef(false);
+
+  const isConnected = state.connectedDevice !== null;
 
   useEffect(() => {
     // BLE 초기화
@@ -102,8 +103,8 @@ const ConnectBle = ({ route }: Props) => {
   }, []);
 
   const handleDiscoverPeripheral = (peripheral) => {
-    // console.log('Discovered peripheral:', peripheral);
     if (peripheral.name === 'Zephy46') {
+      deviceFoundRef.current = true;
       setPeripherals(map => new Map(map.set(peripheral.id, {
         ...peripheral,
         connected: false
@@ -124,9 +125,16 @@ const ConnectBle = ({ route }: Props) => {
       }
 
       const state = await BleManager.checkState();
-
-      console.log("state : ", state);
-      // 이미 스캔 중이면 중지
+      if(state === "off") {
+        setModalContent({
+          title: "알림",
+          content: "블루투스 연결을 활성화해주세요."
+        });
+        setOpenAlertModal(true);
+        setIsScanning(false);
+        return;
+      }
+      
       if (isScanning) {
         BleManager.stopScan();
         setIsScanning(false);
@@ -134,9 +142,9 @@ const ConnectBle = ({ route }: Props) => {
       }
 
       // 스캔 시작
+      deviceFoundRef.current = false;
       setPeripherals(new Map());
       setIsScanning(true);
-      setIsConnected(false);
       setIsSubscribed(false);
       setSelectedDevice(null);
       
@@ -144,6 +152,18 @@ const ConnectBle = ({ route }: Props) => {
       BleManager.scan([], 10, true)
         .then(() => {
           console.log('Scan started');
+          // 5초 후에 디바이스가 없으면 알림 표시
+          setTimeout(() => {
+            if (!deviceFoundRef.current) {
+              setModalContent({
+                title: "알림",
+                content: "디바이스를 찾지 못했습니다."
+              });
+              setOpenAlertModal(true);
+              BleManager.stopScan();
+              setIsScanning(false);
+            }
+          }, 5000);
         })
         .catch((error) => {
           console.error('Scan error:', error);
@@ -194,11 +214,44 @@ const ConnectBle = ({ route }: Props) => {
 
   const handleDeviceSelect = async (deviceId: string) => {
     try {
+      // 이전 연결 상태 정리
+      if (isSubscribed) {
+        try {
+          const peripheralInfo = await BleManager.retrieveServices(deviceId);
+          if (peripheralInfo.services && peripheralInfo.characteristics) {
+            for (const service of peripheralInfo.services) {
+              const characteristics = peripheralInfo.characteristics[service.uuid];
+              if (characteristics) {
+                for (const characteristic of characteristics) {
+                  if (characteristic.properties.Notify || characteristic.properties.Indicate) {
+                    await BleManager.stopNotification(deviceId, service.uuid, characteristic.uuid);
+                  }
+                }
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Error cleaning up previous connection:', error);
+        }
+      }
+
+      // 이전 데이터 초기화
+      dispatch({ type: 'CLEAR_COLLECTED_DATA' });
+      setIsSubscribed(false);
+      
+      // 새 연결 시도
       await BleManager.connect(deviceId);
       
       // 연결 상태 업데이트
-      setIsConnected(true);
-      dispatch({type: 'CONNECT_DEVICE', payload: {startDate: dayjs().format('YYYYMMDD'), startTime: dayjs().format('HHmmss'), deviceCode: selectedPet.device_code, petCode: selectedPet.pet_code}})
+      dispatch({
+        type: 'CONNECT_DEVICE', 
+        payload: {
+          startDate: dayjs().format('YYYYMMDD'), 
+          startTime: dayjs().format('HHmmss'), 
+          deviceCode: selectedPet.device_code, 
+          petCode: selectedPet.pet_code
+        }
+      });
 
       // peripherals 맵 업데이트
       setPeripherals(prevPeripherals => {
@@ -230,7 +283,7 @@ const ConnectBle = ({ route }: Props) => {
       setOpenMessageModal(true);
     } catch (error) {
       console.error('Connection error:', error);
-      setIsConnected(false);
+      dispatch({ type: 'CONNECT_DEVICE', payload: null });
       setIsSubscribed(false);
       setModalContent({
         title: '연결 실패',
@@ -254,9 +307,32 @@ const ConnectBle = ({ route }: Props) => {
     }
   };
 
-  const handleDisconnectPeripheral = (data: any) => {
+  const handleDisconnectPeripheral = async (data: any) => {
     console.log('Device disconnected:', data.peripheral);
-    setIsConnected(false);
+    
+    // 구독 중지
+    if (isSubscribed) {
+      try {
+        const peripheralInfo = await BleManager.retrieveServices(data.peripheral);
+        if (peripheralInfo.services && peripheralInfo.characteristics) {
+          for (const service of peripheralInfo.services) {
+            const characteristics = peripheralInfo.characteristics[service.uuid];
+            if (characteristics) {
+              for (const characteristic of characteristics) {
+                if (characteristic.properties.Notify || characteristic.properties.Indicate) {
+                  await BleManager.stopNotification(data.peripheral, service.uuid, characteristic.uuid);
+                }
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error stopping notifications:', error);
+      }
+    }
+
+    dispatch({ type: 'CONNECT_DEVICE', payload: null });
+    dispatch({ type: 'CLEAR_COLLECTED_DATA' });
     setIsSubscribed(false);
     setSelectedDevice(null);
     
@@ -314,6 +390,8 @@ const ConnectBle = ({ route }: Props) => {
         console.log('Disconnected from device:', selectedDevice);
         
         // 연결 해제 시 상태 업데이트
+        dispatch({ type: 'CONNECT_DEVICE', payload: null });
+        dispatch({ type: 'CLEAR_COLLECTED_DATA' });
         setPeripherals(map => {
           const newMap = new Map(map);
           const peripheral = newMap.get(selectedDevice);
@@ -327,7 +405,6 @@ const ConnectBle = ({ route }: Props) => {
       }
     }
     setSelectedDevice(null);
-    setIsConnected(false);
   };
 
   const handleMonitoring = () => {
@@ -411,8 +488,8 @@ const ConnectBle = ({ route }: Props) => {
       />  
       <AlertModal
         visible={openAlertModal}
-        title="연결 오류"
-        content="디바이스와의 연결을 확인해주세요."
+        title={modalContent.title}
+        content={modalContent.content}
         onClose={() => setOpenAlertModal(false)}
       />
     </>

@@ -18,9 +18,8 @@ const Header: React.FC<HeaderProps> = ({ title }) => {
   const [modalContent, setModalContent] = useState({ title: '', content: '' });
 
   const state = navigation.getState();
-  const routes = state.routes;
-  const currentRoute = routes[state.index];
-
+  const currentRoute = state.routes[state.index];
+  const previousRoute = state.routes[state.index - 1];
   // useEffect(() => {
   //   if (logoutSuccess) {
   //     setMenuVisible(false);
@@ -55,7 +54,7 @@ const Header: React.FC<HeaderProps> = ({ title }) => {
   //     console.error(error);
   //   }
   // }
-  
+ 
 
   return (
     <View style={styles.header}>
@@ -65,15 +64,17 @@ const Header: React.FC<HeaderProps> = ({ title }) => {
           pressed && styles.pressedButton
         ]}
         onPress={() => {
-          if(currentRoute.name === 'PetLists' && routes[state.index - 1]?.name === 'Login'){
+
+          if (previousRoute?.name === 'Login') {
             setModalContent({
               title: "안내",
               content: "마지막 페이지입니다."
             });
             setOpenAlertModal(true);
-          } else {
-            navigation.goBack()
+            return;
           }
+
+          navigation.goBack();
         }}
       >
         <Image 
@@ -82,6 +83,8 @@ const Header: React.FC<HeaderProps> = ({ title }) => {
         />
       </Pressable>
       <Text style={styles.title}>{title}</Text> 
+      {/* <Text>{currentRoute.name}</Text> 
+      <Text>{previousRoute.name}</Text>  */}
       {/* <Pressable style={styles.rightButton} onPress={() => setMenuVisible(true)}>
         <Text style={styles.right_btn_text}>⋮</Text>
       </Pressable> */}
@@ -113,7 +116,7 @@ const Header: React.FC<HeaderProps> = ({ title }) => {
         title={modalContent.title}
         content={modalContent.content}
       />
-    </View>
+      </View>
   );
 };
 

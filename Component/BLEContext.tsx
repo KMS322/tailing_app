@@ -25,7 +25,7 @@ interface BLEState {
 
 // 액션 타입 정의
 type BLEAction = 
-  | { type: 'CONNECT_DEVICE'; payload: { startDate: string; startTime: string; deviceCode: string; petCode: string } }
+  | { type: 'CONNECT_DEVICE'; payload: { startDate: string; startTime: string; deviceCode: string; petCode: string } | null }
   | { type: 'UPDATE_CHART_DATA'; payload: number; skipAnimation: boolean }
   | { type: 'COLLECT_DATA'; payload: DataPoint }
   | { type: 'CLEAR_COLLECTED_DATA' };
@@ -75,12 +75,12 @@ export const BLEProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const lastUpdateTime = useRef<number>(Date.now());
   const { createCSV } = dataStore();
   const {sendData} = dataStore();
+  const cntRef = useRef(0);  // cnt를 useRef로 관리
   
-  let cnt = 0;
   const collectData = (data: number[]) => {
-    cnt++;
+    cntRef.current++;
     const timestamp = dayjs().format('HHmmssSSS');
-    console.log(`cnt : ${cnt}, data : ${data}, 현재 저장된 데이터 길이 : ${state.collectedData.length}`);
+    console.log(`cnt : ${cntRef.current}, data : ${data}, 현재 저장된 데이터 길이 : ${state.collectedData.length}`);
     
     dispatch({
       type: "COLLECT_DATA",
@@ -101,7 +101,8 @@ export const BLEProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   React.useEffect(() => {
     if ((state.collectedData.length+1) / 500 > 1) {
       const dataToSend = [...state.collectedData]; 
-      dispatch({ type: 'CLEAR_COLLECTED_DATA' }); 
+      dispatch({ type: 'CLEAR_COLLECTED_DATA' });
+      cntRef.current = 0;  // 데이터 전송 시 cnt 초기화
       
       if (state.connectedDevice) {
         sendData(dataToSend, state.connectedDevice)
@@ -116,6 +117,13 @@ export const BLEProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     }
   }, [state.collectedData.length]);
+
+  // 디바이스 연결 상태 변경 감지
+  React.useEffect(() => {
+    if (!state.connectedDevice) {
+      cntRef.current = 0;  // 디바이스 연결이 끊어질 때 cnt 초기화
+    }
+  }, [state.connectedDevice]);
 
   const addChartData = React.useCallback((data: number) => {
     const now = Date.now();

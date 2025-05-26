@@ -11,11 +11,13 @@ import {
   Image,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useFocusEffect } from '@react-navigation/native';
 import MessageModal from './modal/messageModal';
 import AlertModal from './modal/alertModal';
 import { deviceStore } from '../store/deviceStore';
 import Orientation from 'react-native-orientation-locker';
 import TermsModal from './modal/termsModal';
+import { getToken, removeToken } from '../utils/storage';
 
 type RootStackParamList = {
   Login: undefined;
@@ -65,22 +67,32 @@ const Login = ({ navigation }: { navigation: NavigationProp }) => {
     offLoginError
   } = deviceStore();
 
-  // useEffect(() => {
-  //   const checkToken = async () => {
-  //     const token = await getToken();
-  //     if (token && token.device_code) {
-  //       setModalContent({
-  //         title: "로그인 정보 확인",
-  //         content: "로그인 정보가 남아있어 목록 페이지로 이동합니다."
-  //       });
-  //       setOpenMessageModal(true);
-  //       setTimeout(() => {
-  //         navigation.navigate('PetLists');
-  //       }, 1500);
-  //     }
-  //   };
-  //   checkToken();
-  // }, []);
+  // useFocusEffect로 변경
+  useFocusEffect(
+    React.useCallback(() => {
+      console.log("Screen focused");
+      const checkToken = async () => {
+        console.log("Checking token...");
+        const token = await getToken();
+        console.log("Token check result:", token);
+        console.log("Token type:", typeof token);
+        console.log("Device code:", token?.device_code);
+        
+        if (token && token.device_code) {
+          console.log("token : ", token);
+          setModalContent({
+            title: "로그인 정보 확인",
+            content: "로그아웃 후 로그인이 가능합니다."
+          });
+          setOpenMessageModal(true);
+          setTimeout(() => {
+            navigation.navigate('PetLists');
+          }, 1500);
+        }
+      };
+      checkToken();
+    }, [])
+  );
 
   useEffect(() => {
     if (loginSuccess) {
@@ -107,16 +119,6 @@ const Login = ({ navigation }: { navigation: NavigationProp }) => {
     }
   }, [loginError]);
 
-  // const { width, height } = useWindowDimensions();
-  // useEffect(() => {
-  //   if (width > height) {
-  //     Dimensions.set({
-  //       width: height,
-  //       height: width
-  //     });
-  //   }
-  // }, [width, height]);
-
   useEffect(() => {
     Orientation.lockToPortrait();
 
@@ -125,7 +127,6 @@ const Login = ({ navigation }: { navigation: NavigationProp }) => {
     };
   }, []);
 
-  // 유효성 검사
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
 

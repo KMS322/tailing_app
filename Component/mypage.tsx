@@ -12,6 +12,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import ConfirmModal from './modal/confirmModal';
 import MessageModal from './modal/messageModal';
 import { orgStore } from '../store/orgStore';
+import { removeToken } from '../utils/token';
 
 type RootStackParamList = {
   MypageChangeInfo: undefined;
@@ -30,6 +31,7 @@ const Mypage = () => {
   const handleLogout = async() => {
     try {
       await logout();
+      await removeToken();
       setOpenMessageModal(true);
       setTimeout(() => {
         navigation.navigate('Login');
@@ -41,7 +43,7 @@ const Mypage = () => {
 
   return (
     <>
-      <Header title="마이페이지" />
+      <Header title="마이페이지"/>
       <SafeAreaView style={styles.container}>
         <View style={styles.article_container}>
           <View style={styles.cs_container}>
