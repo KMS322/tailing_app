@@ -5,6 +5,7 @@ import {
   Text,
   View,
   TouchableOpacity,
+  Image,
 } from 'react-native';
 import Header from './header';
 import { useNavigation } from '@react-navigation/native';
@@ -45,33 +46,49 @@ const Mypage = () => {
     <>
       <Header title="마이페이지"/>
       <SafeAreaView style={styles.container}>
-        <View style={styles.article_container}>
-          <View style={styles.cs_container}>
-              <View style={styles.cs_title_box}>
-                <Text style={styles.cs_title}>E-mail</Text>
-                <Text style={styles.cs_title}>연락처</Text>
-              </View>
-              <View style={styles.cs_text_box}>
-                <Text style={styles.cs_text}>talktail@creamoff.co.kr</Text>
-                <Text style={styles.cs_text}>010-4898-5955</Text>
-              </View>
+        <View style={styles.profileSection}>
+          <View style={styles.profileImageWrapper}>
+            <Image
+              source={require('../assets/images/profile_icon.png')}
+              style={styles.profileImage}
+            />
           </View>
-          <View style={styles.btn_container}>
-            <TouchableOpacity style={styles.btn_box} onPress={() => navigation.navigate('MypageChangeInfo')}>
-              <View style={styles.btn}> 
-                <Text style={styles.btn_text}>정보 수정</Text>
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.btn_box} onPress={() => navigation.navigate('MypageChangePW')}>
-              <View style={styles.btn}>
-                <Text style={styles.btn_text}>비밀번호 수정</Text>
-              </View>
-            </TouchableOpacity>
+          <View style={styles.profileInfo}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={styles.profileName}>홍길동님</Text>
+              <TouchableOpacity onPress={() => setOpenConfirmModal(true)}>
+                <Text style={styles.logoutText}>로그아웃</Text>
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.profileEmail}>hong123@gmail.com</Text>
           </View>
         </View>
-        <TouchableOpacity style={styles.logout_btn} onPress={() => setOpenConfirmModal(true)}>
-          <Text style={styles.logout_btn_text}>로그아웃</Text>
-        </TouchableOpacity>
+
+        <View style={styles.divider} />
+
+        <Text style={styles.sectionTitle}>나의 정보</Text>
+        <View style={styles.menuSection}>
+          <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('MypageChangeInfo')}>
+            <Text style={styles.menuText}>회원정보 수정</Text>
+            <Image source={require('../assets/images/right_btn.png')} style={styles.menuArrow}/>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('MypageChangePW')}>
+            <Text style={styles.menuText}>비밀번호 변경</Text>
+            <Image source={require('../assets/images/right_btn.png')} style={styles.menuArrow}/>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('MypageAgree')}>
+            <Text style={styles.menuText}>알림 설정</Text>
+            <Image source={require('../assets/images/right_btn.png')} style={styles.menuArrow}/>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.divider} />
+
+        <Text style={styles.supportTitle}>고객지원</Text>
+        <View style={styles.supportSection}>
+          <Text style={styles.supportEmail}>talktail@creamoff.co.kr</Text>
+          <Text style={styles.supportPhone}>010-4898-5955</Text>
+        </View>
       </SafeAreaView>
       <ConfirmModal
         visible={openConfirmModal}
@@ -94,86 +111,96 @@ const Mypage = () => {
 
 const styles = StyleSheet.create({
   container: {
-    width: "100%",
-    height: "auto",
-    backgroundColor: '#FFFFFF',
-    display:"flex",
-    flexDirection: "column",
-    alignItems: "center",
+    flex: 1,
+    backgroundColor: '#fff',
+    padding: 24,
   },
-  article_container: {
-    width: "80%",
-    height: "auto",
-    borderWidth: 1,
-    borderColor: "black",
-    marginTop: 100,
-    display: "flex",
-    alignItems: "center",
+  profileSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    marginTop: 24,
   },
-  cs_container: {
-    width: "90%",
-    height: "auto",
-    display: "flex",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    borderBottomWidth: 1,
-    borderColor: "black",
-    marginTop: 20,
-    marginBottom: 10,
-    paddingBottom: 10,
+  profileImageWrapper: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
   },
-  cs_title_box: {
-    width: "25%",
-    height: 70,
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "space-between",
+  profileImage: {
+    width: 64,
+    height: 64,
+    resizeMode: 'contain',
   },
-  cs_title: {
+  profileInfo: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  profileName: {
     fontSize: 20,
-    fontWeight: "bold",
-    color: "#F5B75C",
-  },
-  cs_text_box: {
-    width: "75%",
-    height: 70,
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "space-between",
-  },
-  cs_text: {
-    fontSize: 16,
+    fontWeight: 'bold',
+    marginRight: 8,
     color: "black",
-    textAlign: "right",
   },
-  btn_container: {
-    width: 240,
-    height: 100,
-    display: "flex",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 10,
-    marginBottom: 20,
+  logoutText: {
+    fontSize: 13,
+    color: '#BDBDBD',
+    marginLeft: 8,
   },
-  btn_box: {
-    width: 100,
-    height: "100%",
-    borderWidth: 1,
-    borderColor: "#F0663F",
-    backgroundColor: "#F0663F",
-    borderRadius: 6,
+  profileEmail: {
+    fontSize: 14,
+    color: '#888',
+    marginTop: 2,
   },
-  btn: {
-    width: "100%",
-    height: "100%",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
+  divider: {
+    height: 1,
+    backgroundColor: '#E0E0E0',
+    marginVertical: 16,
   },
-  btn_text: {
+  sectionTitle: {
+    color: '#F0663F',
+    fontWeight: 'bold',
+    fontSize: 18,
+    marginBottom: 8,
+  },
+  menuSection: {
+    marginBottom: 8,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    justifyContent: 'space-between',
+  },
+  menuText: {
     fontSize: 16,
-    fontWeight: "bold",
-    color: "white",
+    color: 'black',
+  },
+  menuArrow: {
+    width: 24,
+    height: 24,
+    marginLeft: 8,
+  },
+  supportTitle: {
+    color: '#F0663F',
+    fontWeight: 'bold',
+    fontSize: 18,
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  supportSection: {
+    marginBottom: 24,
+  },
+  supportEmail: {
+    fontSize: 15,
+    color: '#222',
+    marginBottom: 4,
+  },
+  supportPhone: {
+    fontSize: 15,
+    color: '#222',
   },
   logout_btn: {
     width: "50%",

@@ -117,6 +117,8 @@ export const dataStore = create<DataStore>((set, get) => ({
   },
   downCSV: async(file_name: string, label: string) => {
     try {
+      console.log("label :", label)
+      console.log("file_name :", file_name)
       set({downCsvLoading: true, downCsvError: null, downCsvSuccess: false});
       const date_time = file_name.split("_")[2].replace(/\.csv$/i, "");
       const extIndex = file_name.lastIndexOf(".");

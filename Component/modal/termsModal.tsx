@@ -424,6 +424,7 @@ const styles = StyleSheet.create({
     includeFontPadding: false,
   },
   checkboxText: {
+    width: '87%',
     fontSize: 14,
     color: '#333',
   },

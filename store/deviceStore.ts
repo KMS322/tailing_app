@@ -159,10 +159,18 @@ export const deviceStore = create<DeviceStore>((set, get) => ({
         set({ loginLoading: false, loginSuccess: true });
       }
     } catch (error: any) {
+      let errorMessage = '로그인에 실패했습니다.';
+      
+      if (error.message === 'Network Error') {
+        errorMessage = '네트워크 연결을 확인해주세요.';
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      
       set({
         loginLoading: false,
         loginSuccess: false,
-        loginError: error.response?.data?.message || '로그인에 실패했습니다.'
+        loginError: errorMessage
       });
       throw error;
     }

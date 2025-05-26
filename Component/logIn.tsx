@@ -17,7 +17,7 @@ import AlertModal from './modal/alertModal';
 import { deviceStore } from '../store/deviceStore';
 import Orientation from 'react-native-orientation-locker';
 import TermsModal from './modal/termsModal';
-import { getToken, removeToken } from '../utils/storage';
+import { getToken } from '../utils/storage';
 
 type RootStackParamList = {
   Login: undefined;
@@ -70,16 +70,10 @@ const Login = ({ navigation }: { navigation: NavigationProp }) => {
   // useFocusEffect로 변경
   useFocusEffect(
     React.useCallback(() => {
-      console.log("Screen focused");
       const checkToken = async () => {
-        console.log("Checking token...");
         const token = await getToken();
-        console.log("Token check result:", token);
-        console.log("Token type:", typeof token);
-        console.log("Device code:", token?.device_code);
         
         if (token && token.device_code) {
-          console.log("token : ", token);
           setModalContent({
             title: "로그인 정보 확인",
             content: "로그아웃 후 로그인이 가능합니다."
@@ -111,7 +105,7 @@ const Login = ({ navigation }: { navigation: NavigationProp }) => {
   useEffect(() => {
     if (loginError) {
       setModalContent({
-        title: "로그인 실패",
+        title: "안내",
         content: loginError
       });
       setOpenAlertModal(true);
