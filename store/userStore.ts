@@ -12,6 +12,11 @@ export interface Pet {
   gender: boolean;  
   neutered: boolean;
   disease: string;
+  history: string;
+  admission: string;
+  species: string;
+  weight: string;
+  vet: string;
 }
 
 interface PetFormData {
@@ -21,6 +26,11 @@ interface PetFormData {
   gender: boolean;
   neutered: boolean;
   disease: string;
+  history: string;
+  admission: string;
+  species: string;
+  weight: string;
+  vet: string;
   device_code: string;
 }
 

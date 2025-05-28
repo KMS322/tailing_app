@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState ,useEffect} from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -6,6 +6,7 @@ import {
   View,
   TouchableOpacity,
   Image,
+  ScrollView,
 } from 'react-native';
 import Header from './header';
 import { useNavigation } from '@react-navigation/native';
@@ -14,12 +15,15 @@ import ConfirmModal from './modal/confirmModal';
 import MessageModal from './modal/messageModal';
 import { orgStore } from '../store/orgStore';
 import { removeToken } from '../utils/token';
+import Footer from './footer';
 
 type RootStackParamList = {
   MypageChangeInfo: undefined;
   MypageChangePW: undefined;
+  MypageAgree: undefined;
   Login: undefined;
-  // Add other screens as needed
+  Board: undefined;
+  MypageOut: undefined;
 };
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -28,7 +32,10 @@ const Mypage = () => {
   const navigation = useNavigation<NavigationProp>();
   const [openConfirmModal, setOpenConfirmModal] = useState(false);
   const [openMessageModal, setOpenMessageModal] = useState(false);
-  const { logout } = orgStore();
+  const { org, logout,loadOrg } = orgStore();
+  useEffect(() => {
+    loadOrg();
+  }, []);
   const handleLogout = async() => {
     try {
       await logout();
@@ -45,7 +52,7 @@ const Mypage = () => {
   return (
     <>
       <Header title="마이페이지"/>
-      <SafeAreaView style={styles.container}>
+      <ScrollView style={styles.container}>
         <View style={styles.profileSection}>
           <View style={styles.profileImageWrapper}>
             <Image
@@ -55,18 +62,18 @@ const Mypage = () => {
           </View>
           <View style={styles.profileInfo}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={styles.profileName}>홍길동님</Text>
+              <Text style={styles.profileName}>{org.org_name}님</Text>
               <TouchableOpacity onPress={() => setOpenConfirmModal(true)}>
                 <Text style={styles.logoutText}>로그아웃</Text>
               </TouchableOpacity>
             </View>
-            <Text style={styles.profileEmail}>hong123@gmail.com</Text>
+            <Text style={styles.profileEmail}>{org.org_email}</Text>
           </View>
         </View>
 
         <View style={styles.divider} />
 
-        <Text style={styles.sectionTitle}>나의 정보</Text>
+        <Text style={styles.sectionTitle}>정보</Text>
         <View style={styles.menuSection}>
           <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('MypageChangeInfo')}>
             <Text style={styles.menuText}>회원정보 수정</Text>
@@ -76,10 +83,29 @@ const Mypage = () => {
             <Text style={styles.menuText}>비밀번호 변경</Text>
             <Image source={require('../assets/images/right_btn.png')} style={styles.menuArrow}/>
           </TouchableOpacity>
+          <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('Board')}>
+            <Text style={styles.menuText}>공지 사항</Text>
+            <Image source={require('../assets/images/right_btn.png')} style={styles.menuArrow}/>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.divider} />
+
+        <Text style={styles.sectionTitle}>설정</Text>
+        <View style={styles.menuSection}>
           <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('MypageAgree')}>
+            <Text style={styles.menuText}>수신 동의 설정</Text>
+            <Image source={require('../assets/images/right_btn.png')} style={styles.menuArrow}/>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.menuItem}>
             <Text style={styles.menuText}>알림 설정</Text>
             <Image source={require('../assets/images/right_btn.png')} style={styles.menuArrow}/>
           </TouchableOpacity>
+          <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('MypageOut')}>
+            <Text style={styles.menuText}>개인 설정</Text>
+            <Image source={require('../assets/images/right_btn.png')} style={styles.menuArrow}/>
+          </TouchableOpacity>
+   
         </View>
 
         <View style={styles.divider} />
@@ -89,7 +115,8 @@ const Mypage = () => {
           <Text style={styles.supportEmail}>talktail@creamoff.co.kr</Text>
           <Text style={styles.supportPhone}>010-4898-5955</Text>
         </View>
-      </SafeAreaView>
+        <Footer />
+      </ScrollView>
       <ConfirmModal
         visible={openConfirmModal}
         title="로그아웃"
@@ -119,7 +146,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 16,
-    marginTop: 24,
+    marginTop: 0,
   },
   profileImageWrapper: {
     width: 64,

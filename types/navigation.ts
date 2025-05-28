@@ -13,4 +13,10 @@ export type RootStackParamList = {
   Mypage: undefined;
   MypageChangeInfo: undefined;
   MypageChangePW: undefined;
+  MypageAgree: undefined;
+  MypageOut: undefined;
+  Board: undefined;
+  BoardDetail: {
+    board_code: string;
+  };
 }; 
