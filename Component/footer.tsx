@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { ScrollView, View, Text, StyleSheet } from 'react-native';
 
 const BRAND_COLOR = '#F0663F';
 
@@ -38,6 +38,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 0,
     alignItems: 'center',
+    marginBottom: 30,
   },
   sectionTitle: {
     fontSize: 16,
@@ -50,7 +51,7 @@ const styles = StyleSheet.create({
   infoTable: {
     width: '90%',
     maxWidth: 400,
-    marginBottom: 0,
+    marginBottom: 16,
   },
   infoRow: {
     flexDirection: 'row',
@@ -77,6 +78,7 @@ const styles = StyleSheet.create({
     color: '#ccc',
     fontSize: 13,
     marginTop: 16,
+    marginBottom: 16,
     textAlign: 'center',
   },
 });

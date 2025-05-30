@@ -64,7 +64,7 @@ const Mypage = () => {
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Text style={styles.profileName}>{org.org_name}님</Text>
               <TouchableOpacity onPress={() => setOpenConfirmModal(true)}>
-                <Text style={styles.logoutText}>로그아웃</Text>
+                {/* <Text style={styles.logoutText}>로그아웃</Text> */}
               </TouchableOpacity>
             </View>
             <Text style={styles.profileEmail}>{org.org_email}</Text>
@@ -97,10 +97,10 @@ const Mypage = () => {
             <Text style={styles.menuText}>수신 동의 설정</Text>
             <Image source={require('../assets/images/right_btn.png')} style={styles.menuArrow}/>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.menuItem}>
+          {/* <TouchableOpacity style={styles.menuItem}>
             <Text style={styles.menuText}>알림 설정</Text>
             <Image source={require('../assets/images/right_btn.png')} style={styles.menuArrow}/>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
           <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('MypageOut')}>
             <Text style={styles.menuText}>개인 설정</Text>
             <Image source={require('../assets/images/right_btn.png')} style={styles.menuArrow}/>

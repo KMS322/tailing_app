@@ -55,8 +55,10 @@ type Props = {
 const BleManagerModule = NativeModules.BleManager;
 const bleManagerEmitter = new NativeEventEmitter(BleManagerModule);
 
-const SERVICE_UUID = 'a3c87500-8ed3-4bdf-8a39-a01bebede295';
-const CHARACTERISTIC_UUID_RX = 'a3c87502-8ed3-4bdf-8a39-a01bebede295';
+// const SERVICE_UUID = 'a3c87500-8ed3-4bdf-8a39-a01bebede295';
+// const CHARACTERISTIC_UUID_RX = 'a3c87502-8ed3-4bdf-8a39-a01bebede295';
+const SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
+const CHARACTERISTIC_UUID_RX = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
 
 const ConnectBle = ({ route }: Props) => {
   
@@ -103,7 +105,7 @@ const ConnectBle = ({ route }: Props) => {
   }, []);
 
   const handleDiscoverPeripheral = (peripheral) => {
-    if (peripheral.name === 'Zephy46') {
+    if (peripheral.name === 'Device') {
       deviceFoundRef.current = true;
       setPeripherals(map => new Map(map.set(peripheral.id, {
         ...peripheral,
@@ -297,13 +299,35 @@ const ConnectBle = ({ route }: Props) => {
     const value = data.value;
     const decodedValue = Buffer.from(value, 'base64').toString('utf-8');
     
-    const numbers = decodedValue.split(',').map(num => {
-      const parsed = parseInt(num.trim());
-      return isNaN(parsed) ? 0 : parsed;
-    });
-    if (numbers.length > 0 && !isNaN(numbers[0])) {
-      addChartData(numbers[0]);
-      collectData(numbers);
+    if(decodedValue.includes(":")) {
+      if(decodedValue.split(":")[0] === "Temp") {
+        const tempValue = parseFloat(decodedValue.split(":")[1].trim());
+        console.log(`Temp:${tempValue}`);
+        dispatch({ 
+          type: 'UPDATE_TEMP', 
+          payload: {
+            value: tempValue,
+            timestamp: Date.now()
+          }
+        });
+      } else if (decodedValue.split(":")[0] === "SpO2") {
+        const spo2Value = parseInt(decodedValue.split(":")[1].trim());
+        console.log(`SpO2:${spo2Value}`);
+        dispatch({ type: 'UPDATE_SPO2', payload: spo2Value });
+      } else if(decodedValue.split(":")[0] === "HR") {
+        const hrValue = parseInt(decodedValue.split(":")[1].trim());
+        console.log(`HR:${hrValue}`);
+        dispatch({ type: 'UPDATE_HR', payload: hrValue });
+      }
+    } else {
+      const numbers = decodedValue.split(',').map(num => {
+        const parsed = parseInt(num.trim());
+        return isNaN(parsed) ? 0 : parsed;
+      });
+      if (numbers.length > 0 && !isNaN(numbers[0])) {
+        addChartData(numbers[0]);
+        collectData(numbers);
+      }
     }
   };
 
@@ -366,8 +390,10 @@ const ConnectBle = ({ route }: Props) => {
   }, [dataBuffer]);
 
   const handleDisconnect = async () => {
+    console.log("AAA");
     if (selectedDevice) {
-      try {
+    console.log("BBB");
+    try {
         // 구독 중지
         if (isSubscribed) {
           const peripheralInfo = await BleManager.retrieveServices(selectedDevice);

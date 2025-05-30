@@ -4,7 +4,7 @@ import dayjs from 'dayjs';
 
 // 상태 타입 정의
 interface DataPoint { 
-  timestamp: string;
+  timestamp: number;
   ir: number;
   red: number;
   spo2: number;
@@ -21,6 +21,10 @@ interface BLEState {
   } | null;
   chartData: number[];
   collectedData: DataPoint[];
+  currentHR: number | null;
+  currentSpO2: number | null;
+  currentTemp: { value: number; timestamp: number } | null;
+  tempChartData: Array<{ value: number; timestamp: number }>;
 }
 
 // 액션 타입 정의
@@ -28,13 +32,20 @@ type BLEAction =
   | { type: 'CONNECT_DEVICE'; payload: { startDate: string; startTime: string; deviceCode: string; petCode: string } | null }
   | { type: 'UPDATE_CHART_DATA'; payload: number; skipAnimation: boolean }
   | { type: 'COLLECT_DATA'; payload: DataPoint }
-  | { type: 'CLEAR_COLLECTED_DATA' };
+  | { type: 'CLEAR_COLLECTED_DATA' }
+  | { type: 'UPDATE_HR'; payload: number }
+  | { type: 'UPDATE_SPO2'; payload: number }
+  | { type: 'UPDATE_TEMP'; payload: { value: number; timestamp: number } };
 
 // 초기 상태
 const initialState: BLEState = {
   connectedDevice: null,
   chartData: [],
   collectedData: [],
+  currentHR: null,
+  currentSpO2: null,
+  currentTemp: null,
+  tempChartData: [],
 };
 
 // 리듀서 함수
@@ -53,6 +64,20 @@ const bleReducer = (state: BLEState, action: BLEAction): BLEState => {
       return newState;
     case 'CLEAR_COLLECTED_DATA':
       return { ...state, collectedData: [] };
+    case 'UPDATE_HR':
+      return { ...state, currentHR: action.payload };
+    case 'UPDATE_SPO2':
+      return { ...state, currentSpO2: action.payload };
+    case 'UPDATE_TEMP':
+      const newTempData = [...state.tempChartData, action.payload];
+      if (newTempData.length > 60) { // 최대 50개 데이터 포인트 유지
+        newTempData.shift();
+      }
+      return { 
+        ...state, 
+        currentTemp: action.payload,
+        tempChartData: newTempData
+      };
     default:
       return state;
   }
@@ -79,8 +104,8 @@ export const BLEProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   
   const collectData = (data: number[]) => {
     cntRef.current++;
-    const timestamp = dayjs().format('HHmmssSSS');
-    console.log(`cnt : ${cntRef.current}, data : ${data}, 현재 저장된 데이터 길이 : ${state.collectedData.length}`);
+    const timestamp = Date.now(); // dayjs 대신 Date.now() 사용
+    // console.log(`cnt : ${cntRef.current}, data : ${data}, 현재 저장된 데이터 길이 : ${state.collectedData.length}`);
     
     dispatch({
       type: "COLLECT_DATA",
@@ -105,7 +130,13 @@ export const BLEProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       cntRef.current = 0;  // 데이터 전송 시 cnt 초기화
       
       if (state.connectedDevice) {
-        sendData(dataToSend, state.connectedDevice)
+        // BLEDataPoint를 DataStore의 DataPoint로 변환
+        const convertedData = dataToSend.map(item => ({
+          ...item,
+          timestamp: dayjs(item.timestamp).format('HH:mm:ss.SSS')
+        }));
+        
+        sendData(convertedData, state.connectedDevice)
           .then(() => {
             console.log("데이터 전송 완료");
           })
