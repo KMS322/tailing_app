@@ -10,7 +10,7 @@ type IRDataPoint = {
 
 const DetailHeart = ({ screen }: { screen: string }) => {
   const { state } = useBLE();
-  const { irChartData } = state;
+  const { chartData } = state;
   const [data, setData] = useState<IRDataPoint[]>([]);
   const [isAutoScrolling, setIsAutoScrolling] = useState(true);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -60,11 +60,11 @@ const DetailHeart = ({ screen }: { screen: string }) => {
   // BLE 데이터를 그래프 데이터로 변환
   useEffect(() => {
     try {
-      if (!isAutoScrolling || !irChartData || !Array.isArray(irChartData) || irChartData.length === 0) return;
+      if (!isAutoScrolling || !chartData || !Array.isArray(chartData) || chartData.length === 0) return;
 
       // 데이터 포인트 수를 줄임 (모든 포인트를 사용하지 않고 일부만 사용)
-      const step = Math.max(1, Math.floor(irChartData.length / 100));
-      const newDataPoints: IRDataPoint[] = irChartData
+      const step = Math.max(1, Math.floor(chartData.length / 100));
+      const newDataPoints: IRDataPoint[] = chartData
         .filter((_, index) => index % step === 0) // 데이터 포인트 샘플링
         .filter(value => typeof value === 'number' && !isNaN(value) && isFinite(value))
         .map((value, index) => ({
@@ -80,7 +80,7 @@ const DetailHeart = ({ screen }: { screen: string }) => {
     } catch (error) {
       console.error('Error processing BLE data:', error);
     }
-  }, [irChartData, isAutoScrolling]);
+  }, [chartData, isAutoScrolling]);
 
   // 자동 스크롤 효과 - 애니메이션 제거
   useEffect(() => {

@@ -26,12 +26,7 @@ const DetailTemp = ({ tempData, screen }: { tempData: number, screen: string }) 
     console.log('tempChartData : ', tempChartData);
     if (!isAutoScrolling || !tempChartData || tempChartData.length === 0) return;
 
-    // 유효한 데이터만 필터링 (timestamp가 0이 아니고 value가 0이 아닌 데이터)
-    const validData = tempChartData.filter(item => 
-      item.timestamp > 0 && item.value > 0
-    );
-    
-    setData(validData);
+    setData(tempChartData);
   }, [tempChartData, isAutoScrolling]);
 
   // 데이터가 업데이트될 때마다 스크롤을 오른쪽 끝으로 이동 (자동 스크롤이 활성화된 경우에만)
@@ -41,11 +36,11 @@ const DetailTemp = ({ tempData, screen }: { tempData: number, screen: string }) 
     }
   }, [data, isAutoScrolling]);
 
-  // 데이터 정규화 - 더 안전한 계산
-  const values = data.map(item => item.value).filter(val => val > 0);
+  // 데이터 정규화
+  const values = data.map(item => item.value);
   const minValue = values.length > 0 ? Math.min(...values) : 0;
   const maxValue = values.length > 0 ? Math.max(...values) : 40; // 기본 온도 범위
-  const valueRange = Math.max(maxValue - minValue, 1); // 최소값을 1로 설정
+  const valueRange = maxValue - minValue || 1; // 0으로 나누는 것을 방지
 
   // SVG Path 생성
   const createPath = () => {
@@ -53,9 +48,7 @@ const DetailTemp = ({ tempData, screen }: { tempData: number, screen: string }) 
     
     const points = data.map((item, index) => {
       const value = item.value;
-      const x = data.length === 1 
-        ? chartWidth / 2 
-        : (index / Math.max(data.length - 1, 1)) * (chartWidth - padding * 2 - rightMargin) + padding;
+      const x = (index / (data.length - 1)) * (chartWidth - padding * 2 - rightMargin) + padding;
       const y = padding + ((maxValue - value) / valueRange) * graphHeight;
       return `${x},${y}`;
     });
@@ -113,25 +106,8 @@ const DetailTemp = ({ tempData, screen }: { tempData: number, screen: string }) 
               {/* 데이터 포인트 */}
               {data.length > 0 && data.map((item, index) => {
                 const value = item.value;
-                
-                // 유효하지 않은 데이터는 건너뛰기
-                if (value <= 0 || item.timestamp <= 0) {
-                  return null;
-                }
-                
-                // x 좌표 계산 수정
-                const x = data.length === 1 
-                  ? chartWidth / 2 
-                  : (index / Math.max(data.length - 1, 1)) * (chartWidth - padding * 2 - rightMargin) + padding;
-                
-                // y 좌표 계산 수정
+                const x = data.length === 1 ? chartWidth / 2 : (index / (data.length - 1)) * (chartWidth - padding * 2 - rightMargin) + padding;
                 const y = padding + ((maxValue - value) / valueRange) * graphHeight;
-                
-                // NaN 체크 추가
-                if (isNaN(x) || isNaN(y)) {
-                  return null;
-                }
-                
                 return (
                   <View key={index}>
                     <View

@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { SafeAreaView, StyleSheet, Text, View, Dimensions, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { SafeAreaView, StyleSheet, Text, View, Dimensions, ScrollView, TouchableOpacity, InteractionManager } from 'react-native';
 import Svg, { Path, Line } from 'react-native-svg';
 import { useBLE } from './BLEContext';
 
@@ -10,10 +10,14 @@ type IRDataPoint = {
 
 const DetailHeart = ({ screen }: { screen: string }) => {
   const { state } = useBLE();
-  const { irChartData } = state;
+  const { chartData } = state;
   const [data, setData] = useState<IRDataPoint[]>([]);
   const [isAutoScrolling, setIsAutoScrolling] = useState(true);
+  const [isAnimating, setIsAnimating] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
+  const prevLengthRef = useRef(0);
+  const animationFrameRef = useRef<number | null>(null);
+  const animationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const screenWidth = Dimensions.get('window').width;
   const pointsPerView = 100;
@@ -57,45 +61,56 @@ const DetailHeart = ({ screen }: { screen: string }) => {
     }
   };
 
-  // BLE 데이터를 그래프 데이터로 변환
+  // BLE 데이터를 그래프 데이터로 변환 - 50개씩 묶음 처리 + 1초 애니메이션
   useEffect(() => {
     try {
-      if (!isAutoScrolling || !irChartData || !Array.isArray(irChartData) || irChartData.length === 0) return;
+      if (!isAutoScrolling || !chartData || !Array.isArray(chartData) || chartData.length === 0) return;
+      if (isAnimating) return; // 애니메이션 중이면 새로운 데이터 처리 안함
 
-      // 데이터 포인트 수를 줄임 (모든 포인트를 사용하지 않고 일부만 사용)
-      const step = Math.max(1, Math.floor(irChartData.length / 100));
-      const newDataPoints: IRDataPoint[] = irChartData
-        .filter((_, index) => index % step === 0) // 데이터 포인트 샘플링
-        .filter(value => typeof value === 'number' && !isNaN(value) && isFinite(value))
-        .map((value, index) => ({
-          timestamp: Date.now() + index * 20,
-          value: value
-        }));
-
-      setData(prevData => {
-        const updatedData = [...prevData, ...newDataPoints];
-        // 최대 100개의 데이터 포인트만 유지
-        return updatedData.slice(-100);
-      });
+      const newDataCount = chartData.length - prevLengthRef.current;
+      
+      // 50개씩 묶인 데이터가 들어왔을 때만 처리
+      if (newDataCount >= 50) {
+        const newBatch = chartData.slice(-50); // 최근 50개 데이터
+        
+        // 애니메이션 시작
+        animateData(newBatch);
+      }
     } catch (error) {
       console.error('Error processing BLE data:', error);
     }
-  }, [irChartData, isAutoScrolling]);
+  }, [chartData.length, isAutoScrolling, isAnimating]);
 
-  // 자동 스크롤 효과 - 애니메이션 제거
+  // 자동 스크롤 효과 - 안전한 구현
   useEffect(() => {
     if (!isAutoScrolling) return;
 
     const scrollInterval = setInterval(() => {
-      if (scrollViewRef.current) {
-        scrollViewRef.current.scrollToEnd({ animated: false }); // 애니메이션 비활성화
-      }
-    }, 500); // 500ms로 변경하여 콜백 누적 방지
+      InteractionManager.runAfterInteractions(() => {
+        if (scrollViewRef.current) {
+          scrollViewRef.current.scrollToEnd({ animated: false });
+        }
+      });
+    }, 2000); // 2초 간격으로 더 늘려서 안정성 확보
 
     return () => {
       clearInterval(scrollInterval);
     };
   }, [isAutoScrolling]);
+
+  // 컴포넌트 언마운트 시 정리
+  useEffect(() => {
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+      if (animationTimeoutRef.current) {
+        clearTimeout(animationTimeoutRef.current);
+      }
+    };
+  }, []);
+
+
 
   // Y축 레이블 생성
   const getYLabels = () => {
@@ -114,8 +129,8 @@ const DetailHeart = ({ screen }: { screen: string }) => {
     }
   };
 
-  // SVG Path 생성 - 최적화
-  const createPath = () => {
+  // SVG Path 생성 - 메모이제이션 최적화
+  const createPath = useMemo(() => {
     try {
       if (!data || data.length === 0) return '';
       
@@ -140,6 +155,75 @@ const DetailHeart = ({ screen }: { screen: string }) => {
       console.error('Error creating path:', error);
       return '';
     }
+  }, [data, pointWidth, padding, chartHeight, graphHeight]);
+
+  // 최적화된 데이터 설정 함수
+  const setDataOptimized = useCallback((newDataPoints: IRDataPoint[]) => {
+    setData(prevData => {
+      const updatedData = [...prevData, ...newDataPoints];
+      const slicedData = updatedData.slice(-100);
+      
+      // 실제로 변경이 있을 때만 업데이트
+      if (prevData.length === slicedData.length && 
+          prevData.every((item, index) => 
+            item.value === slicedData[index]?.value && 
+            item.timestamp === slicedData[index]?.timestamp
+          )) {
+        return prevData; // 변경 없으면 이전 데이터 반환
+      }
+      
+      return slicedData;
+    });
+  }, []);
+
+  const animateData = (newBatch: number[]) => {
+    // 이미 애니메이션 중이면 중단
+    if (isAnimating) {
+      if (animationTimeoutRef.current) {
+        clearTimeout(animationTimeoutRef.current);
+      }
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    }
+    
+    setIsAnimating(true);
+    
+    let currentIndex = 0;
+    const startTime = Date.now();
+    const duration = 1000; // 1초
+    
+    const animate = () => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      
+      // 현재까지 표시해야 할 포인트 수 계산
+      const targetIndex = Math.floor(progress * newBatch.length);
+      
+      // 새로운 포인트들 추가
+      while (currentIndex < targetIndex && currentIndex < newBatch.length) {
+        const newDataPoint: IRDataPoint = {
+          timestamp: Date.now() + currentIndex * 20,
+          value: newBatch[currentIndex]
+        };
+        
+        setDataOptimized([newDataPoint]);
+        currentIndex++;
+      }
+      
+      // 애니메이션 계속
+      if (progress < 1) {
+        animationFrameRef.current = requestAnimationFrame(animate);
+      } else {
+        // 애니메이션 완료
+        prevLengthRef.current = chartData.length;
+        setIsAnimating(false);
+        animationFrameRef.current = null;
+      }
+    };
+    
+    // 애니메이션 시작
+    animationFrameRef.current = requestAnimationFrame(animate);
   };
 
   const yLabels = getYLabels();
@@ -178,7 +262,7 @@ const DetailHeart = ({ screen }: { screen: string }) => {
               {/* 데이터 라인 */}
               {data.length > 0 && (
                 <Path
-                  d={createPath()}
+                  d={createPath}
                   stroke="#F5B75C"
                   strokeWidth="2"
                   fill="none"

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -10,14 +10,16 @@ import {
   Platform,
   Image,
 } from 'react-native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useFocusEffect } from '@react-navigation/native';
+import {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import {useFocusEffect} from '@react-navigation/native';
 import MessageModal from './modal/messageModal';
 import AlertModal from './modal/alertModal';
-import { deviceStore } from '../store/deviceStore';
+import {deviceStore} from '../store/deviceStore';
 import Orientation from 'react-native-orientation-locker';
 import TermsModal from './modal/termsModal';
-import { getToken } from '../utils/storage';
+import {getToken} from '../utils/storage';
+import FindIdModal from './modal/findIdModal';
+import FindPasswordModal from './modal/findPasswordModal';
 
 type RootStackParamList = {
   Login: undefined;
@@ -45,7 +47,7 @@ type FormErrors = {
   [key in keyof FormData]?: string;
 };
 
-const Login = ({ navigation }: { navigation: NavigationProp }) => {
+const Login = ({navigation}: {navigation: NavigationProp}) => {
   const [formData, setFormData] = useState<FormData>({
     id: '',
     password: '',
@@ -53,30 +55,43 @@ const Login = ({ navigation }: { navigation: NavigationProp }) => {
   const [errors, setErrors] = useState<FormErrors>({});
   const [openMessageModal, setOpenMessageModal] = useState<boolean>(false);
   const [openAlertModal, setOpenAlertModal] = useState<boolean>(false);
-  const [modalContent, setModalContent] = useState<{ title: string, content: string }>({
+  const [modalContent, setModalContent] = useState<{
+    title: string;
+    content: string;
+  }>({
     title: '',
-    content: ''
+    content: '',
   });
   const [openTermsModal, setOpenTermsModal] = useState<boolean>(false);
-  const [termsType, setTermsType] = useState<'privacy' | 'terms' | 'agreement'>('privacy');
+  const [termsType, setTermsType] = useState<'privacy' | 'terms' | 'agreement'>(
+    'privacy',
+  );
   const {
     login,
     loginSuccess,
     loginError,
     offLoginSuccess,
-    offLoginError
+    offLoginError,
+    findID,
+    offFindIDSuccess,
+    changePasswordSuccess,
+    offFindPasswordSuccess,
+    ofChangePasswordSuccess,
   } = deviceStore();
+  const [openFindIdModal, setOpenFindIdModal] = useState<boolean>(false);
+  const [openFindPasswordModal, setOpenFindPasswordModal] =
+    useState<boolean>(false);
 
   // useFocusEffect로 변경
   useFocusEffect(
     React.useCallback(() => {
       const checkToken = async () => {
         const token = await getToken();
-        
+
         if (token && token.device_code) {
           setModalContent({
-            title: "로그인 정보 확인",
-            content: "로그아웃 후 로그인이 가능합니다."
+            title: '자동 로그인',
+            content: '이전 로그인 기록으로 로그인됩니다.',
           });
           setOpenMessageModal(true);
           setTimeout(() => {
@@ -85,14 +100,14 @@ const Login = ({ navigation }: { navigation: NavigationProp }) => {
         }
       };
       checkToken();
-    }, [])
+    }, []),
   );
 
   useEffect(() => {
     if (loginSuccess) {
       setModalContent({
-        title: "로그인 성공",
-        content: "로그인이 성공적으로 완료되었습니다."
+        title: '로그인 성공',
+        content: '로그인이 성공적으로 완료되었습니다.',
       });
       setOpenMessageModal(true);
       offLoginSuccess();
@@ -103,10 +118,23 @@ const Login = ({ navigation }: { navigation: NavigationProp }) => {
   }, [loginSuccess]);
 
   useEffect(() => {
+    if (changePasswordSuccess) {
+      setModalContent({
+        title: '비밀번호 변경 완료',
+        content: '비밀번호 변경이 완료되었습니다.',
+      });
+      setOpenMessageModal(true);
+      offFindPasswordSuccess();
+      ofChangePasswordSuccess();
+      setTimeout(() => {}, 2000);
+    }
+  }, [changePasswordSuccess]);
+
+  useEffect(() => {
     if (loginError) {
       setModalContent({
-        title: "안내",
-        content: loginError
+        title: '안내',
+        content: loginError,
       });
       setOpenAlertModal(true);
       offLoginError();
@@ -152,7 +180,7 @@ const Login = ({ navigation }: { navigation: NavigationProp }) => {
     setTermsType('agreement');
     setOpenTermsModal(true);
   };
-  
+
   const handleTermsAgree = (agreementInfo: {
     marketingAgreed: boolean;
     smsAgreed: boolean;
@@ -161,8 +189,26 @@ const Login = ({ navigation }: { navigation: NavigationProp }) => {
   }) => {
     setOpenTermsModal(false);
     navigation.navigate('SignUp', {
-      agreementInfo
+      agreementInfo,
     });
+  };
+
+  const handleFindId = async (deviceCode: string) => {
+    try {
+      await findID(deviceCode);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleFindIdModalClose = () => {
+    setOpenFindIdModal(false);
+    offFindIDSuccess();
+  };
+
+  const handleFindPasswordModalClose = () => {
+    setOpenFindPasswordModal(false);
+    offFindPasswordSuccess();
   };
 
   return (
@@ -170,13 +216,17 @@ const Login = ({ navigation }: { navigation: NavigationProp }) => {
       <SafeAreaView style={styles.container}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.keyboardAvoidingView}
-        >
+          style={styles.keyboardAvoidingView}>
           <SafeAreaView style={styles.content}>
             <View style={styles.header}>
-              <Image source={require('../assets/images/talkTail_logo.png')} style={styles.logo} />
+              <Image
+                source={require('../assets/images/talkTail_logo.png')}
+                style={styles.logo}
+              />
               <Text style={styles.subtitle}>반려동물은 Tail로 소통하고</Text>
-              <Text style={styles.subtitle}>우리는 "Talktail"로 소통합니다.</Text>
+              <Text style={styles.subtitle}>
+                우리는 "Talktail"로 소통합니다.
+              </Text>
             </View>
 
             <SafeAreaView style={styles.form}>
@@ -185,16 +235,14 @@ const Login = ({ navigation }: { navigation: NavigationProp }) => {
                 <TextInput
                   style={styles.input}
                   value={formData.id}
-                  onChangeText={(text) => {
-                    setFormData(prev => ({ ...prev, id: text }));
-                    setErrors(prev => ({ ...prev, id: undefined }));
+                  onChangeText={text => {
+                    setFormData(prev => ({...prev, id: text}));
+                    setErrors(prev => ({...prev, id: undefined}));
                   }}
                   placeholder="아이디를 입력하세요"
                   placeholderTextColor="#999999"
                 />
-                {errors.id && (
-                  <Text style={styles.errorText}>{errors.id}</Text>
-                )}
+                {errors.id && <Text style={styles.errorText}>{errors.id}</Text>}
               </View>
 
               <View style={styles.inputGroup}>
@@ -202,9 +250,9 @@ const Login = ({ navigation }: { navigation: NavigationProp }) => {
                 <TextInput
                   style={styles.input}
                   value={formData.password}
-                  onChangeText={(text) => {
-                    setFormData(prev => ({ ...prev, password: text }));
-                    setErrors(prev => ({ ...prev, password: undefined }));
+                  onChangeText={text => {
+                    setFormData(prev => ({...prev, password: text}));
+                    setErrors(prev => ({...prev, password: undefined}));
                   }}
                   placeholder="비밀번호를 입력하세요"
                   placeholderTextColor="#999999"
@@ -215,24 +263,35 @@ const Login = ({ navigation }: { navigation: NavigationProp }) => {
                 )}
               </View>
 
-              <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+              <TouchableOpacity
+                style={styles.submitButton}
+                onPress={handleSubmit}>
                 <Text style={styles.submitButtonText}>로그인</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={styles.signUpButton}
-                onPress={handleSignUpPress}
-              >
+                onPress={handleSignUpPress}>
                 <Text style={styles.signUpButtonText}>회원가입</Text>
               </TouchableOpacity>
+
+              <View style={styles.findAccountContainer}>
+                <TouchableOpacity onPress={() => setOpenFindIdModal(true)}>
+                  <Text style={styles.findAccountText}>아이디 찾기</Text>
+                </TouchableOpacity>
+                <Text style={styles.findAccountDivider}>|</Text>
+                <TouchableOpacity
+                  onPress={() => setOpenFindPasswordModal(true)}>
+                  <Text style={styles.findAccountText}>비밀번호 찾기</Text>
+                </TouchableOpacity>
+              </View>
 
               <View style={styles.termsContainer}>
                 <TouchableOpacity
                   onPress={() => {
                     setTermsType('privacy');
                     setOpenTermsModal(true);
-                  }}
-                >
+                  }}>
                   <Text style={styles.termsText}>개인정보 처리방침</Text>
                 </TouchableOpacity>
                 <Text style={styles.termsDivider}>|</Text>
@@ -240,8 +299,7 @@ const Login = ({ navigation }: { navigation: NavigationProp }) => {
                   onPress={() => {
                     setTermsType('terms');
                     setOpenTermsModal(true);
-                  }}
-                >
+                  }}>
                   <Text style={styles.termsText}>이용약관</Text>
                 </TouchableOpacity>
               </View>
@@ -267,6 +325,15 @@ const Login = ({ navigation }: { navigation: NavigationProp }) => {
         onClose={() => setOpenTermsModal(false)}
         onAgree={handleTermsAgree}
       />
+      <FindIdModal
+        visible={openFindIdModal}
+        onClose={handleFindIdModalClose}
+        onSubmit={handleFindId}
+      />
+      <FindPasswordModal
+        visible={openFindPasswordModal}
+        onClose={handleFindPasswordModalClose}
+      />
     </>
   );
 };
@@ -289,9 +356,10 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   logo: {
-    width: '80%',
-    height: 100,
-    marginBottom: 4
+    width: 200,
+    height: 80,
+    resizeMode: 'contain',
+    marginBottom: 4,
   },
   subtitle: {
     fontSize: 14,
@@ -348,6 +416,23 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
   },
+  findAccountContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 15,
+    marginBottom: 15,
+  },
+  findAccountText: {
+    color: '#666',
+    fontSize: 14,
+    textDecorationLine: 'underline',
+  },
+  findAccountDivider: {
+    color: '#666',
+    fontSize: 14,
+    marginHorizontal: 10,
+  },
   termsContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -366,4 +451,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Login; 
+export default Login;

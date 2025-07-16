@@ -9,15 +9,17 @@ import {
   PermissionsAndroid,
   Dimensions,
   ScrollView,
+  AppState,
+  Image,
 } from 'react-native';
-import { RouteProp} from '@react-navigation/native';
-import Header from "./header"
+import {RouteProp} from '@react-navigation/native';
+import Header from './header';
 import NavigationBar from './navigationBar';
-
+import {Buffer} from 'buffer';
 import DashboardInfo from './dashboardInfo';
 import DashboardChart from './dashboardChart';
 import DashboardData from './dashboardData';
-import { useBLE } from './BLEContext';
+import {useBLE} from './BLEContext';
 
 type RootStackParamList = {
   Dashboard: {
@@ -44,7 +46,6 @@ const windowWidth = Dimensions.get('window').width;
 
 import BleManager, {
   BleDisconnectPeripheralEvent,
- 
   Peripheral,
 } from 'react-native-ble-manager';
 const BleManagerModule = NativeModules.BleManager;
@@ -80,14 +81,15 @@ declare module 'react-native-ble-manager' {
   }
 }
 
-const Dashboard = ({ route }: { route: DashboardScreenRouteProp }) => {
-  const { selectedPet } = route.params;
-  const { state } = useBLE();  // BLEContext 사용
+const Dashboard = ({route}: {route: DashboardScreenRouteProp}) => {
+  const {selectedPet} = route.params;
+  const {state} = useBLE(); // BLEContext 사용
   const [isScanning, setIsScanning] = useState(false);
   const [peripherals, setPeripherals] = useState(
     new Map<Peripheral['id'], Peripheral>(),
   );
   const [orientation, setOrientation] = useState('PORTRAIT');
+  const [appState, setAppState] = useState(AppState.currentState);
 
   // BLEContext의 상태를 사용
   const hrData = state.currentHR;
@@ -120,14 +122,13 @@ const Dashboard = ({ route }: { route: DashboardScreenRouteProp }) => {
       `[handleDisconnectedPeripheral][${event.peripheral}] disconnected.`,
     );
   };
- 
 
   const handleDiscoverPeripheral = (peripheral: Peripheral) => {
     if (
       peripheral.name === 'Zephy45' ||
       peripheral.advertising.localName === 'Zephy45'
     ) {
-      addOrUpdatePeripheral(peripheral.id, peripheral); 
+      addOrUpdatePeripheral(peripheral.id, peripheral);
     }
   };
 
@@ -186,11 +187,11 @@ const Dashboard = ({ route }: { route: DashboardScreenRouteProp }) => {
   }, []);
 
   // const handleUpdateValueForCharacteristic = (data: any) => {
-  //   // const value = data.value;
-  //   // const decodedValue = Buffer.from(value, 'base64').toString('utf-8');
-    
-  //   // console.log("Raw decoded data:", decodedValue);  // 원본 데이터 로깅
-    
+  //   const value = data.value;
+  //   const decodedValue = Buffer.from(value, 'base64').toString('utf-8');
+
+  //   console.log("Raw decoded data:", decodedValue);  // 원본 데이터 로깅
+
   // };
 
   const handleAndroidPermissions = () => {
@@ -240,29 +241,49 @@ const Dashboard = ({ route }: { route: DashboardScreenRouteProp }) => {
     const { width, height } = Dimensions.get('window');
     setOrientation(width < height ? 'PORTRAIT' : 'LANDSCAPE');
 
-    const subscription = Dimensions.addEventListener('change', ({ window }) => {
-      setOrientation(window.width < window.height ? 'PORTRAIT' : 'LANDSCAPE');
-    });
+    try {
+      const subscription = Dimensions.addEventListener('change', ({ window }) => {
+        setOrientation(window.width < window.height ? 'PORTRAIT' : 'LANDSCAPE');
+      });
 
-    return () => subscription.remove();
+      return () => {
+        subscription.remove();
+      };
+    } catch (error) {
+      console.error("Dimensions.addEventListener 에러:", error);
+    }
   }, []);
+
+  // 화면 회전 감지를 위한 별도의 useEffect
+  useEffect(() => {
+    const { width, height } = Dimensions.get('window');
+    setOrientation(width < height ? 'PORTRAIT' : 'LANDSCAPE');
+  }, [appState]);
 
   return (
     <>
-    {orientation === 'PORTRAIT' && <Header title="디바이스 모니터링" />}
+      {orientation === 'PORTRAIT' && <Header title="디바이스 모니터링" />}
 
-    <ScrollView style={styles.container}>
-      <DashboardInfo screen={orientation} pet={selectedPet}/>
-      <DashboardChart screen={orientation}/>
-      <DashboardData screen={orientation} data={{
-        hrData : hrData,
-        spo2Data : spo2Data,
-        tempData : tempData?.value || null,  
-      }}/>
-      {orientation === "PORTRAIT" ? (<View style={styles.portrait_view}><Text style={styles.portrait_text}>가로로 화면을 봐보세요.</Text></View>) : ""}
-    </ScrollView>
-    {orientation === 'PORTRAIT' && <NavigationBar />}
- 
+      <ScrollView style={styles.container}>
+        <DashboardInfo screen={orientation} pet={selectedPet} />
+        <DashboardChart screen={orientation} />
+        <DashboardData
+          screen={orientation}
+          data={{
+            hrData: hrData,
+            spo2Data: spo2Data,
+            tempData: tempData?.value || null,
+          }}
+        />
+        {orientation === 'PORTRAIT' ? (
+          <View style={styles.portrait_box}>
+            <Image source={require("../assets/images/portrait_able.png")} style={styles.icon_img}/>
+          </View>
+        ) : (
+          ''
+        )}
+      </ScrollView>
+      {orientation === 'PORTRAIT' && <NavigationBar />}
     </>
   );
 };
@@ -306,7 +327,7 @@ const styles = StyleSheet.create({
   basic_text: {
     fontSize: 16,
     fontWeight: '400',
-    color: "#262626"
+    color: '#262626',
   },
   article_box: {
     width: '100%',
@@ -479,7 +500,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     elevation: 3,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
   },
@@ -489,17 +510,26 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   portrait_view: {
-    width: "100%",
-    height: "auto",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
+    width: '100%',
+    height: 'auto',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
     marginTop: 60,
   },
-  portrait_text: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#262626",
-  }
+  portrait_box: {
+    width: 100,
+    height: 100,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+    marginTop: 25,
+    marginBottom: 100,
+  },
+  icon_img: {
+    width: '100%',
+    height: '100%',
+  },
 });
 export default Dashboard;

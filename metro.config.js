@@ -29,7 +29,7 @@ module.exports = {
     //       : path.join(process.cwd(), `node_modules/${name}`),
     // }),
     sourceExts: ['jsx', 'js', 'ts', 'tsx', 'json'],
-    assetExts: ['mp4', 'png', 'jpg', 'jpeg', 'gif'],
+    assetExts: ['mp4', 'png', 'jpg', 'jpeg', 'JPG', 'gif'],
     blockList: [
       /.*\.git\/.*/,
       /.*\.zip/,

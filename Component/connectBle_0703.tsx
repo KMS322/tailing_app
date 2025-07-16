@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useRef, useCallback} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import {
   View,
   Text,
@@ -64,7 +64,7 @@ const ConnectBle = ({route}: Props) => {
   const {selectedPet} = route.params;
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const {dispatch, state, openRetryModal, setOpenRetryModal} = useBLE();
+  const {dispatch, addChartData, collectData, state} = useBLE();
   const [isScanning, setIsScanning] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
   const [peripherals, setPeripherals] = useState(new Map());
@@ -114,7 +114,7 @@ const ConnectBle = ({route}: Props) => {
   }, []);
 
   const handleDiscoverPeripheral = peripheral => {
-    if (peripheral.name === 'Tailing') {
+    if (peripheral.name === 'Zephy45') {
       deviceFoundRef.current = true;
       setPeripherals(
         map =>
@@ -324,60 +324,91 @@ const ConnectBle = ({route}: Props) => {
     }
   };
   let lastTimestamp = performance.now();
-
-  const lastUpdateTime = useRef<number>(Date.now());
-
-  const dataBufferRef = useRef<{data: number[], timestamp: number}[]>([]);
-  const handleUpdateValueForCharacteristic = useCallback((data: any) => {
+  const handleUpdateValueForCharacteristic = (data: any) => {
+    const now = performance.now();
+    const elapsed = now - lastTimestamp;
+    lastTimestamp = now;
 
     const value = data.value;
     const decodedValue = Buffer.from(value, 'base64').toString('utf-8');
-    // console.log('🔔 handleUpdateValueForCharacteristic 호출됨:', new Date().toISOString());
-    
-    const parsedData = decodedValue.split(',').map(Number);
-    console.log("temp : ", parsedData[6]);
-    if (parsedData[1] < 110000) {
-      // 버퍼 비우기
-      dataBufferRef.current = [];
-      
-      // 팝업이 이미 표시되지 않은 경우에만 팝업 표시
-      if (!openRetryModal) {
-        setOpenRetryModal(true);
-      }
-      return; // 함수 종료
-    }
+    // console.log('decodedValue : ', decodedValue);
+    console.log(`${elapsed.toFixed(2)} ms : ${decodedValue}`);
 
-    dataBufferRef.current.push({
-      data: parsedData,
-      timestamp: Date.now()
-    });
-    if (dataBufferRef.current.length >= 10) {
-      const collectedData = dataBufferRef.current.slice();
-      dataBufferRef.current = [];
-      
-      const allDataPoints = collectedData.map(({data, timestamp}) => ({
-        timestamp,
-        cnt: data[0],
-        ir: data[1],
-        red: data[2],
-        green: data[3],
-        spo2: data[4] ?? 0,
-        hr: data[5] ?? 0,
-        temp: data[6] ?? 0,
-        battery: data[7] ?? 0,
-      }));
-      
-      // 3단계: dispatch
-      dispatch({
-        type: 'COLLECT_DATAS',
-        payload: allDataPoints,
-      });
-    }
-  }, [dispatch, openRetryModal, setOpenRetryModal]);
+    const numericValue = parseInt(decodedValue);
+  
+  // 유효한 숫자인지 확인 후 차트 데이터에 추가
+  if (!isNaN(numericValue) && isFinite(numericValue)) {
+    addChartData(numericValue);
+  }
+    // if (decodedValue.includes(',')) {
+    //   const data = decodedValue.split(',');
+    //   const ir = data[0];
+    //   const red = data[1];
+    //   const spo2 = data[2];
+    //   const hr = data[3];
+    //   const temp = data[4];
+
+    //   // console.log(
+    //   //   `ir : ${ir}, red : ${red}, spo2 : ${spo2}, hr : ${hr}, temp : ${temp}`,
+    //   // );
+    //   if(Number(data[2]) !== 0) {
+    //     dispatch({
+    //       type: 'UPDATE_SPO2',
+    //       payload: Number(data[2]),
+
+    //     });
+    //   }
+    //   if(Number(data[3]) !== 0) {
+    //     dispatch({
+    //       type: 'UPDATE_HR',
+    //       payload: Number(data[3]),
+    //     });
+    //   }
+    //   if(Number(data[4]) !== 0) {
+    //     dispatch({
+    //       type: 'UPDATE_TEMP',
+    //       payload: {
+    //         value: Number(data[4]),
+    //         timestamp: Date.now(),
+    //       },
+    //     });
+    //     addChartData(Number(data[4]));
+    //   }
+    // }
+    // if (decodedValue.includes(':')) {
+    //   if (decodedValue.split(':')[0] === 'Temp') {
+    //     const tempValue = parseFloat(decodedValue.split(':')[1].trim());
+    //     console.log(`Temp:${tempValue}`);
+    //     dispatch({
+    //       type: 'UPDATE_TEMP',
+    //       payload: {
+    //         value: tempValue,
+    //         timestamp: Date.now(),
+    //       },
+    //     });
+    //   } else if (decodedValue.split(':')[0] === 'SpO2') {
+    //     const spo2Value = parseInt(decodedValue.split(':')[1].trim());
+    //     console.log(`SpO2:${spo2Value}`);
+    //     dispatch({type: 'UPDATE_SPO2', payload: spo2Value});
+    //   } else if (decodedValue.split(':')[0] === 'HR') {
+    //     const hrValue = parseInt(decodedValue.split(':')[1].trim());
+    //     console.log(`HR:${hrValue}`);
+    //     dispatch({type: 'UPDATE_HR', payload: hrValue});
+    //   }
+    // } else {
+    //   const numbers = decodedValue.split(',').map(num => {
+    //     const parsed = parseInt(num.trim());
+    //     return isNaN(parsed) ? 0 : parsed;
+    //   });
+    //   if (numbers.length > 0 && !isNaN(numbers[0])) {
+    //     addChartData(numbers[0]);
+    //     collectData(numbers);
+    //   }
+    // }
+  };
 
   const handleDisconnectPeripheral = async (data: any) => {
     console.log('Device disconnected:', data.peripheral);
-    dataBufferRef.current = [];
 
     // 구독 중지
     if (isSubscribed) {
@@ -436,16 +467,18 @@ const ConnectBle = ({route}: Props) => {
   };
 
   // 컴포넌트 언마운트 시 남은 데이터 처리
-  // useEffect(() => {
-  //   return () => {
-  //     if (dataBuffer.length > 0) {
-  //       collectData(dataBuffer);
-  //     }
-  //   };
-  // }, [dataBuffer]);
+  useEffect(() => {
+    return () => {
+      if (dataBuffer.length > 0) {
+        collectData(dataBuffer);
+      }
+    };
+  }, [dataBuffer]);
 
   const handleDisconnect = async () => {
+    console.log('AAA');
     if (selectedDevice) {
+      console.log('BBB');
       try {
         // 구독 중지
         if (isSubscribed) {

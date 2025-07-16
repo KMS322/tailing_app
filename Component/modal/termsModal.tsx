@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   Modal,
   View,
@@ -16,7 +16,7 @@ type TermsModalProps = {
   onAgree?: () => void;
 };
 
-const TermsModal = ({ visible, type, onClose, onAgree }: TermsModalProps) => {
+const TermsModal = ({visible, type, onClose, onAgree}: TermsModalProps) => {
   const [privacyAgreed, setPrivacyAgreed] = useState(false);
   const [termsAgreed, setTermsAgreed] = useState(false);
   const [marketingAgreed, setMarketingAgreed] = useState(false);
@@ -40,12 +40,26 @@ const TermsModal = ({ visible, type, onClose, onAgree }: TermsModalProps) => {
   }, [allAgreed]);
 
   useEffect(() => {
-    if (privacyAgreed && termsAgreed && marketingAgreed && smsAgreed && emailAgreed && pushAgreed) {
+    if (
+      privacyAgreed &&
+      termsAgreed &&
+      marketingAgreed &&
+      smsAgreed &&
+      emailAgreed &&
+      pushAgreed
+    ) {
       setAllAgreed(true);
     } else {
       setAllAgreed(false);
     }
-  }, [privacyAgreed, termsAgreed, marketingAgreed, smsAgreed, emailAgreed, pushAgreed]);
+  }, [
+    privacyAgreed,
+    termsAgreed,
+    marketingAgreed,
+    smsAgreed,
+    emailAgreed,
+    pushAgreed,
+  ]);
 
   const handleAllAgree = () => {
     const newAllAgreed = !allAgreed;
@@ -95,20 +109,25 @@ const TermsModal = ({ visible, type, onClose, onAgree }: TermsModalProps) => {
 - 기술 지원, 고객 상담, 문제 해결
 - 법적 의무 이행 및 통계 활용
 
-3. 보유 및 이용 기간
+3. 위치정보 처리에 관한 사항
+
+- 본 앱은 Bluetooth 기기 연결을 위해 사용자의 위치정보 접근 권한을 요청합니다.
+- 해당 권한은 BLE 장치 탐색 및 연결을 위한 기술적 요구사항이며, 사용자의 실제 위치를 저장하거나 전송하지 않습니다.
+
+4. 보유 및 이용 기간
 
 - 회원 탈퇴 시까지 또는 관련 법령에 따라 보존
 
-4. 제3자 제공
+5. 제3자 제공
 
 - 법령에 따라 수사기관 등의 요청이 있을 경우에 한해 제공
 
-5. 이용자의 권리
+6. 이용자의 권리
 
 - 열람, 정정, 삭제, 처리정지 요청 가능
 - 요청은 talktail@creamoff.co.kr 로 접수
 
-6. 개인정보 보호책임자
+7. 개인정보 보호책임자
 
 - 이름: 권도혁
 - 직위: 대표자
@@ -152,7 +171,9 @@ const TermsModal = ({ visible, type, onClose, onAgree }: TermsModalProps) => {
   const renderAgreementContent = () => {
     if (type !== 'agreement') {
       return (
-        <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollViewContent}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollViewContent}>
           <Text style={styles.content}>
             {type === 'privacy' ? privacyPolicy : termsOfService}
           </Text>
@@ -162,43 +183,58 @@ const TermsModal = ({ visible, type, onClose, onAgree }: TermsModalProps) => {
 
     return (
       <View style={styles.agreementContainer}>
-        <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollViewContent}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollViewContent}>
           <View style={styles.agreementSection}>
             <View style={styles.agreementHeader}>
               <Text style={styles.agreementTitle}>개인정보 처리방침</Text>
-              <TouchableOpacity onPress={() => setShowPrivacyFull(!showPrivacyFull)}>
-                <Text style={styles.viewFullText}>{showPrivacyFull ? '닫기' : '전문보기'}</Text>
+              <TouchableOpacity
+                onPress={() => setShowPrivacyFull(!showPrivacyFull)}>
+                <Text style={styles.viewFullText}>
+                  {showPrivacyFull ? '닫기' : '전문보기'}
+                </Text>
               </TouchableOpacity>
             </View>
             {showPrivacyFull && (
               <View style={styles.agreementScrollView}>
-                <ScrollView nestedScrollEnabled={true} style={{ maxHeight: 200 }}>
-                  <Text style={styles.fullTextTitle}>크림오프 개인정보 처리방침</Text>
+                <ScrollView nestedScrollEnabled={true} style={{maxHeight: 200}}>
+                  <Text style={styles.fullTextTitle}>
+                    크림오프 개인정보 처리방침
+                  </Text>
                   <Text style={styles.content}>{privacyPolicy}</Text>
                 </ScrollView>
               </View>
             )}
             <TouchableOpacity
               style={styles.checkboxContainer}
-              onPress={() => setPrivacyAgreed(!privacyAgreed)}
-            >
-              <View style={[styles.checkbox, privacyAgreed && styles.checkboxChecked]}>
+              onPress={() => setPrivacyAgreed(!privacyAgreed)}>
+              <View
+                style={[
+                  styles.checkbox,
+                  privacyAgreed && styles.checkboxChecked,
+                ]}>
                 {privacyAgreed && <Text style={styles.checkmark}>✓</Text>}
               </View>
-              <Text style={styles.checkboxText}>(필수) 개인정보 처리방침에 동의합니다.</Text>
+              <Text style={styles.checkboxText}>
+                (필수) 개인정보 처리방침에 동의합니다.
+              </Text>
             </TouchableOpacity>
           </View>
 
           <View style={styles.agreementSection}>
             <View style={styles.agreementHeader}>
               <Text style={styles.agreementTitle}>이용약관</Text>
-              <TouchableOpacity onPress={() => setShowTermsFull(!showTermsFull)}>
-                <Text style={styles.viewFullText}>{showTermsFull ? '닫기' : '전문보기'}</Text>
+              <TouchableOpacity
+                onPress={() => setShowTermsFull(!showTermsFull)}>
+                <Text style={styles.viewFullText}>
+                  {showTermsFull ? '닫기' : '전문보기'}
+                </Text>
               </TouchableOpacity>
             </View>
             {showTermsFull && (
               <View style={styles.agreementScrollView}>
-                <ScrollView nestedScrollEnabled={true} style={{ maxHeight: 200 }}>
+                <ScrollView nestedScrollEnabled={true} style={{maxHeight: 200}}>
                   <Text style={styles.fullTextTitle}>크림오프 이용약관</Text>
                   <Text style={styles.content}>{termsOfService}</Text>
                 </ScrollView>
@@ -206,37 +242,52 @@ const TermsModal = ({ visible, type, onClose, onAgree }: TermsModalProps) => {
             )}
             <TouchableOpacity
               style={styles.checkboxContainer}
-              onPress={() => setTermsAgreed(!termsAgreed)}
-            >
-              <View style={[styles.checkbox, termsAgreed && styles.checkboxChecked]}>
+              onPress={() => setTermsAgreed(!termsAgreed)}>
+              <View
+                style={[
+                  styles.checkbox,
+                  termsAgreed && styles.checkboxChecked,
+                ]}>
                 {termsAgreed && <Text style={styles.checkmark}>✓</Text>}
               </View>
-              <Text style={styles.checkboxText}>(필수) 이용약관에 동의합니다.</Text>
+              <Text style={styles.checkboxText}>
+                (필수) 이용약관에 동의합니다.
+              </Text>
             </TouchableOpacity>
           </View>
 
           <View style={styles.agreementSection}>
             <View style={styles.agreementHeader}>
-              <Text style={styles.agreementTitle}>마케팅 목적의 개인정보 수집 및 이용 동의</Text>
-              <TouchableOpacity onPress={() => setShowMarketingFull(!showMarketingFull)}>
-                <Text style={styles.viewFullText}>{showMarketingFull ? '닫기' : '전문보기'}</Text>
+              <Text style={styles.agreementTitle}>
+                마케팅 목적의 개인정보 수집 및 이용 동의
+              </Text>
+              <TouchableOpacity
+                onPress={() => setShowMarketingFull(!showMarketingFull)}>
+                <Text style={styles.viewFullText}>
+                  {showMarketingFull ? '닫기' : '전문보기'}
+                </Text>
               </TouchableOpacity>
             </View>
             {showMarketingFull && (
               <View style={styles.agreementScrollView}>
-                <ScrollView nestedScrollEnabled={true} style={{ maxHeight: 200 }}>
+                <ScrollView nestedScrollEnabled={true} style={{maxHeight: 200}}>
                   <Text style={styles.content}>{marketingPolicy}</Text>
                 </ScrollView>
               </View>
             )}
             <TouchableOpacity
               style={styles.checkboxContainer}
-              onPress={() => setMarketingAgreed(!marketingAgreed)}
-            >
-              <View style={[styles.checkbox, marketingAgreed && styles.checkboxChecked]}>
+              onPress={() => setMarketingAgreed(!marketingAgreed)}>
+              <View
+                style={[
+                  styles.checkbox,
+                  marketingAgreed && styles.checkboxChecked,
+                ]}>
                 {marketingAgreed && <Text style={styles.checkmark}>✓</Text>}
               </View>
-              <Text style={styles.checkboxText}>(선택) 마케팅 목적의 개인정보 수집 및 이용에 동의합니다.</Text>
+              <Text style={styles.checkboxText}>
+                (선택) 마케팅 목적의 개인정보 수집 및 이용에 동의합니다.
+              </Text>
             </TouchableOpacity>
           </View>
 
@@ -244,24 +295,42 @@ const TermsModal = ({ visible, type, onClose, onAgree }: TermsModalProps) => {
             <Text style={styles.agreementTitle}>광고성 정보 수신 동의</Text>
 
             <View style={styles.checkboxContainer}>
-              <TouchableOpacity style={styles.checkboxContainer} onPress={() => setSmsAgreed(!smsAgreed)}>
-                <View style={[styles.checkbox, smsAgreed && styles.checkboxChecked]}>
+              <TouchableOpacity
+                style={styles.checkboxContainer}
+                onPress={() => setSmsAgreed(!smsAgreed)}>
+                <View
+                  style={[
+                    styles.checkbox,
+                    smsAgreed && styles.checkboxChecked,
+                  ]}>
                   {smsAgreed && <Text style={styles.checkmark}>✓</Text>}
                 </View>
                 <Text style={styles.checkboxText}>(선택) SMS 수신 동의</Text>
               </TouchableOpacity>
             </View>
             <View style={styles.checkboxContainer}>
-              <TouchableOpacity style={styles.checkboxContainer} onPress={() => setEmailAgreed(!emailAgreed)}>
-                <View style={[styles.checkbox, emailAgreed && styles.checkboxChecked]}>
+              <TouchableOpacity
+                style={styles.checkboxContainer}
+                onPress={() => setEmailAgreed(!emailAgreed)}>
+                <View
+                  style={[
+                    styles.checkbox,
+                    emailAgreed && styles.checkboxChecked,
+                  ]}>
                   {emailAgreed && <Text style={styles.checkmark}>✓</Text>}
                 </View>
                 <Text style={styles.checkboxText}>(선택) 이메일 수신 동의</Text>
               </TouchableOpacity>
             </View>
             <View style={styles.checkboxContainer}>
-              <TouchableOpacity style={styles.checkboxContainer} onPress={() => setPushAgreed(!pushAgreed)}>
-                <View style={[styles.checkbox, pushAgreed && styles.checkboxChecked]}>
+              <TouchableOpacity
+                style={styles.checkboxContainer}
+                onPress={() => setPushAgreed(!pushAgreed)}>
+                <View
+                  style={[
+                    styles.checkbox,
+                    pushAgreed && styles.checkboxChecked,
+                  ]}>
                   {pushAgreed && <Text style={styles.checkmark}>✓</Text>}
                 </View>
                 <Text style={styles.checkboxText}>(선택) 앱푸시 수신 동의</Text>
@@ -273,9 +342,9 @@ const TermsModal = ({ visible, type, onClose, onAgree }: TermsModalProps) => {
         <View style={styles.buttonContainer}>
           <TouchableOpacity
             style={styles.allAgreeButton}
-            onPress={handleAllAgree}
-          >
-            <View style={[styles.checkbox, allAgreed && styles.checkboxChecked]}>
+            onPress={handleAllAgree}>
+            <View
+              style={[styles.checkbox, allAgreed && styles.checkboxChecked]}>
               {allAgreed && <Text style={styles.checkmark}>✓</Text>}
             </View>
             <Text style={styles.allAgreeText}>전체 동의</Text>
@@ -283,11 +352,10 @@ const TermsModal = ({ visible, type, onClose, onAgree }: TermsModalProps) => {
           <TouchableOpacity
             style={[
               styles.agreeButton,
-              (!privacyAgreed || !termsAgreed) && styles.agreeButtonDisabled
+              (!privacyAgreed || !termsAgreed) && styles.agreeButtonDisabled,
             ]}
             onPress={onAgree}
-            disabled={!privacyAgreed || !termsAgreed}
-          >
+            disabled={!privacyAgreed || !termsAgreed}>
             <Text style={styles.agreeButtonText}>동의하고 계속하기</Text>
           </TouchableOpacity>
         </View>
@@ -300,14 +368,20 @@ const TermsModal = ({ visible, type, onClose, onAgree }: TermsModalProps) => {
       visible={visible}
       transparent={true}
       animationType="fade"
-      onRequestClose={onClose}
-    >
+      onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
-        <View style={[styles.modalContent, type === 'agreement' && styles.agreementModalContent]}>
+        <View
+          style={[
+            styles.modalContent,
+            type === 'agreement' && styles.agreementModalContent,
+          ]}>
           <View style={styles.header}>
             <Text style={styles.title}>
-              {type === 'privacy' ? '개인정보 처리방침' :
-                type === 'terms' ? '이용약관' : '약관 동의'}
+              {type === 'privacy'
+                ? '개인정보 처리방침'
+                : type === 'terms'
+                ? '이용약관'
+                : '약관 동의'}
             </Text>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
               <Text style={styles.closeButtonText}>✕</Text>
@@ -424,7 +498,6 @@ const styles = StyleSheet.create({
     includeFontPadding: false,
   },
   checkboxText: {
-    width: '87%',
     fontSize: 14,
     color: '#333',
   },
@@ -445,7 +518,6 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     marginTop: 20,
-
   },
   allAgreeButton: {
     flexDirection: 'row',
@@ -453,7 +525,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     marginBottom: 15,
     padding: 10,
-
   },
   allAgreeText: {
     fontSize: 16,
@@ -476,4 +547,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default TermsModal; 
+export default TermsModal;

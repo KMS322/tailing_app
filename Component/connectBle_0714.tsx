@@ -64,7 +64,7 @@ const ConnectBle = ({route}: Props) => {
   const {selectedPet} = route.params;
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const {dispatch, state, openRetryModal, setOpenRetryModal} = useBLE();
+  const {dispatch, addChartData, collectData, state} = useBLE();
   const [isScanning, setIsScanning] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
   const [peripherals, setPeripherals] = useState(new Map());
@@ -114,7 +114,7 @@ const ConnectBle = ({route}: Props) => {
   }, []);
 
   const handleDiscoverPeripheral = peripheral => {
-    if (peripheral.name === 'Tailing') {
+    if (peripheral.name === 'Zephy45') {
       deviceFoundRef.current = true;
       setPeripherals(
         map =>
@@ -324,60 +324,74 @@ const ConnectBle = ({route}: Props) => {
     }
   };
   let lastTimestamp = performance.now();
-
-  const lastUpdateTime = useRef<number>(Date.now());
-
-  const dataBufferRef = useRef<{data: number[], timestamp: number}[]>([]);
   const handleUpdateValueForCharacteristic = useCallback((data: any) => {
+    // const now = performance.now();
+    // const elapsed = now - lastTimestamp;
+    // lastTimestamp = now;
+
+    // 이벤트 발생 주기 출력 (밀리초 단위)
+    // console.log(`time :${elapsed.toFixed(2)}ms`);
 
     const value = data.value;
     const decodedValue = Buffer.from(value, 'base64').toString('utf-8');
-    // console.log('🔔 handleUpdateValueForCharacteristic 호출됨:', new Date().toISOString());
-    
-    const parsedData = decodedValue.split(',').map(Number);
-    console.log("temp : ", parsedData[6]);
-    if (parsedData[1] < 110000) {
-      // 버퍼 비우기
-      dataBufferRef.current = [];
-      
-      // 팝업이 이미 표시되지 않은 경우에만 팝업 표시
-      if (!openRetryModal) {
-        setOpenRetryModal(true);
-      }
-      return; // 함수 종료
-    }
-
-    dataBufferRef.current.push({
-      data: parsedData,
-      timestamp: Date.now()
-    });
-    if (dataBufferRef.current.length >= 10) {
-      const collectedData = dataBufferRef.current.slice();
-      dataBufferRef.current = [];
-      
-      const allDataPoints = collectedData.map(({data, timestamp}) => ({
-        timestamp,
-        cnt: data[0],
-        ir: data[1],
-        red: data[2],
-        green: data[3],
-        spo2: data[4] ?? 0,
-        hr: data[5] ?? 0,
-        temp: data[6] ?? 0,
-        battery: data[7] ?? 0,
-      }));
-      
-      // 3단계: dispatch
+    // console.log('decodedValue : ', decodedValue);
+    // console.log(`decodedValue : ${decodedValue}`);
+    // console.log('decodedValue : ', decodedValue);
+    // collectData(decodedValue.split(',').map(Number));
+    if(Number(decodedValue.split(',')[6]) > 0) {
       dispatch({
-        type: 'COLLECT_DATAS',
-        payload: allDataPoints,
-      });
+        type: 'UPDATE_BATTERY',
+        payload: Number(decodedValue.split(',')[6]),
+      })
     }
-  }, [dispatch, openRetryModal, setOpenRetryModal]);
+    // const numericValue = parseInt(decodedValue.split(',')[0]);
+
+    // 유효한 숫자인지 확인 후 차트 데이터에 추가
+    // if (!isNaN(numericValue) && isFinite(numericValue)) {
+    //   addChartData(numericValue);
+    // }
+    // if (decodedValue.includes(',')) {
+    //   // const data = decodedValue.split(',');
+    //   // console.log(
+    //   //   `ir : ${data[0]}, red : ${data[1]}, green : ${data[2]}, spo2 : ${data[3]}, hr : ${data[4]}, temp : ${data[5]}, bat : ${data[6]}`,
+    //   // );
+    //   if(Number(data[4]) > 0) {
+    //     console.log("battery : ", Number(data[4]));
+    //   }
+    //   addChartData(Number(data[0]));
+    //   collectData(data.map(Number));
+    //   if (Number(data[1]) !== 0) {
+    //     dispatch({
+    //       type: 'UPDATE_SPO2',
+    //       payload: Number(data[1]),
+    //     });
+    //   }
+    //   if (Number(data[2]) !== 0) {
+    //     dispatch({
+    //       type: 'UPDATE_HR',
+    //       payload: Number(data[2]),
+    //     });
+    //   }
+    //   if (Number(data[3]) !== 0) {
+    //     dispatch({
+    //       type: 'UPDATE_TEMP',
+    //       payload: {
+    //         value: Number(data[3]),
+    //         timestamp: Date.now(),
+    //       },
+    //     });
+    //   }
+      // if(Number(data[4]) !== 0) {
+      //   dispatch({
+      //     type: 'UPDATE_BATTERY',
+      //     payload: Number(data[4]),
+      //   })
+      // }
+    // }
+  }, [dispatch, addChartData, collectData]);
 
   const handleDisconnectPeripheral = async (data: any) => {
     console.log('Device disconnected:', data.peripheral);
-    dataBufferRef.current = [];
 
     // 구독 중지
     if (isSubscribed) {
@@ -436,16 +450,18 @@ const ConnectBle = ({route}: Props) => {
   };
 
   // 컴포넌트 언마운트 시 남은 데이터 처리
-  // useEffect(() => {
-  //   return () => {
-  //     if (dataBuffer.length > 0) {
-  //       collectData(dataBuffer);
-  //     }
-  //   };
-  // }, [dataBuffer]);
+  useEffect(() => {
+    return () => {
+      if (dataBuffer.length > 0) {
+        collectData(dataBuffer);
+      }
+    };
+  }, [dataBuffer]);
 
   const handleDisconnect = async () => {
+    console.log('AAA');
     if (selectedDevice) {
+      console.log('BBB');
       try {
         // 구독 중지
         if (isSubscribed) {

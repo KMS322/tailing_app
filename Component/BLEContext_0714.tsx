@@ -1,4 +1,4 @@
-import React, {createContext, useContext, useReducer, useRef, useState} from 'react';
+import React, {createContext, useContext, useReducer, useRef} from 'react';
 import {dataStore} from '../store/dataStore';
 import dayjs from 'dayjs';
 
@@ -27,7 +27,6 @@ interface BLEState {
   currentSpO2: number | null;
   currentTemp: {value: number; timestamp: number} | null;
   tempChartData: Array<{value: number; timestamp: number}>;
-  irChartData: number[];
   currentBattery: number | null;
 }
 
@@ -43,14 +42,12 @@ type BLEAction =
       } | null;
     }
   | {type: 'UPDATE_CHART_DATA'; payload: number; skipAnimation: boolean}
-  | {type: 'COLLECT_DATAS'; payload: DataPoint[]}
+  | {type: 'COLLECT_DATA'; payload: DataPoint}
   | {type: 'CLEAR_COLLECTED_DATA'}
   | {type: 'UPDATE_HR'; payload: number}
   | {type: 'UPDATE_SPO2'; payload: number}
-  | {type: 'UPDATE_SPO2_HR'; payload: {spo2: number; hr: number}}
   | {type: 'UPDATE_TEMP'; payload: {value: number; timestamp: number}}
-  | {type: 'UPDATE_BATTERY'; payload: number}
-  | {type: 'UPDATE_DATAS'; payload: {hr?: number; spo2?: number; temp?: number; battery?: number; tempChartData?: {value: number; timestamp: number}; irChartData?: number[]} };
+  | {type: 'UPDATE_BATTERY'; payload: number};
 
 // 초기 상태
 const initialState: BLEState = {
@@ -61,7 +58,6 @@ const initialState: BLEState = {
   currentSpO2: null,
   currentTemp: null,
   tempChartData: [],
-  irChartData: [],
   currentBattery: null,
 };
 
@@ -76,54 +72,31 @@ const bleReducer = (state: BLEState, action: BLEAction): BLEState => {
         newData.shift();
       }
       return {...state, chartData: newData};
-    case 'COLLECT_DATAS':
-      return {
+    case 'COLLECT_DATA':
+      const newState = {
         ...state,
-        collectedData: [...state.collectedData, ...action.payload],
+        collectedData: [...state.collectedData, action.payload],
       };
+      return newState;
     case 'CLEAR_COLLECTED_DATA':
-      return {
-        ...state,
-        collectedData: [],
-      };
-    case 'UPDATE_DATAS':
-      let newTempData = state.tempChartData;
-      let newIrData = state.irChartData;
-      if (action.payload.tempChartData) {
-        // 중복 체크: 같은 timestamp가 이미 있는지 확인
-        const isDuplicate = state.tempChartData.some(
-          item => item.timestamp === action.payload.tempChartData!.timestamp
-        );
-        
-        // 중복이 아닌 경우에만 추가
-        if (!isDuplicate) {
-          newTempData = [...state.tempChartData, action.payload.tempChartData];
-        }
-      }
-    
-      if (action.payload.irChartData) {
-        newIrData = [...state.irChartData, ...action.payload.irChartData];
-        
-        // 최대 150개 데이터 포인트 유지 (3초치 데이터)
-        if (newIrData.length > 150) {
-          newIrData = newIrData.slice(-150);
-        }
-      }
-
+      return {...state, collectedData: []};
+    case 'UPDATE_HR':
+      return {...state, currentHR: action.payload};
+    case 'UPDATE_SPO2':
+      return {...state, currentSpO2: action.payload};
+    case 'UPDATE_TEMP':
+      const newTempData = [...state.tempChartData, action.payload];
       if (newTempData.length > 60) {
-        // 최대 60개 데이터 포인트 유지
+        // 최대 50개 데이터 포인트 유지
         newTempData.shift();
       }
-      
       return {
         ...state,
-        currentHR: action.payload.hr ?? state.currentHR,
-        currentSpO2: action.payload.spo2 ?? state.currentSpO2,
-        currentTemp: action.payload.temp ? {value: action.payload.temp, timestamp: Date.now()} : state.currentTemp,
-        currentBattery: action.payload.battery ?? state.currentBattery,
+        currentTemp: action.payload,
         tempChartData: newTempData,
-        irChartData: newIrData,
       };
+    case 'UPDATE_BATTERY':
+      return {...state, currentBattery: action.payload};
     default:
       return state;
   }
@@ -135,9 +108,8 @@ const BLEContext = createContext<
       state: BLEState;
       dispatch: React.Dispatch<BLEAction>;
       addChartData: (data: number) => void;
+      collectData: (data: number[]) => void;
       getConnectedDevice: () => BLEState['connectedDevice'];
-      openRetryModal: boolean;
-      setOpenRetryModal: (open: boolean) => void;
     }
   | undefined
 >(undefined);
@@ -153,79 +125,59 @@ export const BLEProvider: React.FC<{children: React.ReactNode}> = ({
   const {createCSV} = dataStore();
   const {sendData} = dataStore();
   const cntRef = useRef(0); // cnt를 useRef로 관리
-  const [openRetryModal, setOpenRetryModal] = useState(false);
- 
+
+  const collectData = (data: number[]) => {
+    cntRef.current++;
+    const timestamp = Date.now(); // dayjs 대신 Date.now() 사용
+    // console.log(`cnt : ${cntRef.current}, data : ${data}, 현재 저장된 데이터 길이 : ${state.collectedData.length}`);
+
+    dispatch({
+      type: 'COLLECT_DATA',
+      payload: {
+        timestamp,
+        ir: data[0],
+        red: data[1],
+        green: data[2],
+        spo2: data[1] ?? 0,
+        hr: data[2] ?? 0,
+        temp: data[3] ?? 0,
+        battery: data[4] ?? 0,
+      },
+    });
+  };
+
   globalGetConnectedDevice = () => state.connectedDevice;
 
   // 데이터 전송 로직을 useEffect로 분리
   React.useEffect(() => {
-    // 150개마다 실행 (3초마다 값 업데이트)
-    if (state.collectedData.length % 150 === 0 && state.collectedData.length > 0) {
-      const json1 = state.collectedData.find((item) => item.spo2 > 0);
-      const json2 = state.collectedData.find((item) => item.temp > 0);
-      const json3 = state.collectedData.find((item) => item.battery > 0);
-      
-      const irDataArray = state.collectedData
-        .filter(item => item.ir > 0) // 유효한 ir 값만 필터링
-        .map(item => item.ir);
-
-      // temp가 유효한 값일 때만 tempChartData 추가
-      if (json2?.temp && json2?.temp > 0 && json2?.timestamp && json2?.timestamp > 0) {
-        dispatch({
-          type: "UPDATE_DATAS",
-          payload: {
-            spo2: json1?.spo2 ?? 0,
-            hr: json1?.hr ?? 0,
-            temp: json2.temp,
-            tempChartData: {value: json2.temp, timestamp: json2.timestamp},
-            irChartData: irDataArray,
-          }
-        });
-      } else if (json3?.battery && json3?.battery > 0) {
-        dispatch({
-          type: "UPDATE_DATAS",
-          payload: {
-            spo2: json1?.spo2 ?? 0,
-            hr: json1?.hr ?? 0,
-            battery: json3.battery,
-            temp: json2?.temp ?? 0,
-            tempChartData: {value: json2?.temp ?? 0, timestamp: json2?.timestamp ?? 0},
-            irChartData: irDataArray,
-          }
-        });
-      }
-      else {
-        // temp 데이터가 없을 때는 tempChartData 없이 dispatch
-        dispatch({
-          type: "UPDATE_DATAS",
-          payload: {
-            spo2: json1?.spo2 ?? 0,
-            hr: json1?.hr ?? 0,
-            temp: json2?.temp ?? 0,
-            irChartData: irDataArray,
-          }
-        });
-      }
-    }
-    if ((state.collectedData.length + 1) / 500 > 1) {
-      // console.log(`${dayjs().format('mm:ss:SSS')} :data send`);
+    // console.log(`${dayjs().format('ss:SSS')} : ${state.collectedData.length}`);
+    if ((state.collectedData.length + 1) / 1000 > 1) {
+      console.log(`${dayjs().format('mm:ss:SSS')} :data send`);
       const dataToSend = [...state.collectedData];
-      // console.log("dataToSend : ", dataToSend);
       dispatch({type: 'CLEAR_COLLECTED_DATA'});
       cntRef.current = 0; // 데이터 전송 시 cnt 초기화
 
       if (state.connectedDevice) {
-        // 비동기로 서버 전송 (메인 스레드 블로킹 방지)
-        setTimeout(() => {
-                  // 타입 캐스팅으로 타입 에러 해결
-        sendData(dataToSend as any, state.connectedDevice!)
-            .then(() => {
-              console.log('데이터 전송 완료');
-            })
-            .catch(error => {
-              console.error('Error sending data:', error);
-            });
-        }, 0);
+        // BLEDataPoint를 DataStore의 DataPoint로 변환
+        const convertedData = dataToSend.map(item => ({
+          ...item,
+
+          timestamp: new Date(item.timestamp).toLocaleTimeString('ko-KR', {
+            hour12: false,
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            fractionalSecondDigits: 3,
+          }),
+        }));
+
+        sendData(convertedData, state.connectedDevice)
+          .then(() => {
+            console.log('데이터 전송 완료');
+          })
+          .catch(error => {
+            console.error('Error sending data:', error);
+          });
       } else {
         console.error('Device information not available');
       }
@@ -264,7 +216,7 @@ export const BLEProvider: React.FC<{children: React.ReactNode}> = ({
 
   return (
     <BLEContext.Provider
-      value={{state, dispatch, addChartData, getConnectedDevice, openRetryModal, setOpenRetryModal}}>
+      value={{state, dispatch, addChartData, collectData, getConnectedDevice}}>
       {children}
     </BLEContext.Provider>
   );
